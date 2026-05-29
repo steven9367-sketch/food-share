@@ -165,16 +165,9 @@
         const captureCanvas = document.getElementById('capture-canvas');
         const captureCtx = captureCanvas.getContext('2d');
 
-        // 8大官方類別虛擬模擬池 (正名為腐爛度)
         const kaggleDatasetPool = [
-            { name: "生鮮當季水果 (Fresh Fruits)", isFresh: true, loc: "學餐大樓 B1 食物共享銀行箱", spoiledRate: "2.4%" },
-            { name: "變質腐爛水果 (Spoiled Fruits)", isFresh: false, loc: "生活機能大樓 綠能廚餘堆肥站", spoiledRate: "97.2%" },
-            { name: "有機新鮮蔬菜 (Fresh Vegetables)", isFresh: true, loc: "學餐大樓 B1 食物共享銀行箱", spoiledRate: "4.8%" },
-            { name: "酸敗發霉蔬菜 (Spoiled Vegetables)", isFresh: false, loc: "生活機能大樓 綠能廚餘堆肥站", spoiledRate: "91.5%" },
-            { name: "手作共享麵包 (Fresh Bread)", isFresh: true, loc: "學餐大樓 B1 食物共享銀行箱", spoiledRate: "1.1%" },
-            { name: "發霉過期麵包 (Spoiled Bread)", isFresh: false, loc: "生活機能大樓 綠能廚餘堆肥站", spoiledRate: "88.6%" },
-            { name: "鮮乳與乳製品 (Fresh Dairy)", isFresh: true, loc: "學餐大樓 B1 食物共享銀行箱", spoiledRate: "3.5%" },
-            { name: "酸敗變質乳製品 (Spoiled Dairy)", isFresh: false, loc: "生活機能大樓 綠能廚餘堆肥站", spoiledRate: "94.3%" }
+            { name: "食材", isFresh: true, loc: "學餐大樓 B1", rate: "98.5%" },
+            { name: "食材", isFresh: false, loc: "生活機能大樓", rate: "92.3%" }
         ];
 
         async function startAutomationSystem() {
@@ -187,89 +180,55 @@
             }
         }
 
+        const backendUrl = "http://10.220.73.181:8000/predict";
+
         window.triggerIdentifyAndUpload = async function() {
             if (video.readyState < 2) {
                 alert("視訊串流加載中，請稍候再試。");
                 return;
             }
 
-            let backendUrl = "http://127.0.0.1:8000/predict";
-
-            if (window.location.hostname !== "127.0.0.1" && window.location.hostname !== "localhost") {
-                let savedIP = localStorage.getItem("food_bank_pc_ip");
-                if (!savedIP) {
-                    savedIP = prompt("【首次開機設定】\n請輸入你電腦目前的 IPv4 位址：\n(可在 CMD 輸入 ipconfig 查詢，如：192.168.1.125)");
-                    if (savedIP) {
-                        savedIP = savedIP.trim();
-                        localStorage.setItem("food_bank_pc_ip", savedIP);
-                    }
-                }
-                if (savedIP) {
-                    backendUrl = `http://${savedIP}:8000/predict`;
-                }
-            }
-
             snapBtn.disabled = true;
-            statusText.innerHTML = "正在擷取視訊影格，傳送至本地邊緣運算中心...";
+            statusText.innerText = "正在擷取視訊影格，傳送至本地邊緣運算中心...";
 
             captureCanvas.width = video.videoWidth || 320;
             captureCanvas.height = video.videoHeight || 240;
             captureCtx.drawImage(video, 0, 0, captureCanvas.width, captureCanvas.height);
             
+            // 取得完整的 DataURL 並處理為純 Base64，移除前面的 metadata
             let fullBase64 = captureCanvas.toDataURL('image/jpeg', 0.4); 
-            let pureBase64 = fullBase64.includes(",") ? fullBase64.split(",")[1] : fullBase64;
+            let pureBase64 = fullBase64.split(',')[1]; 
 
             try {
-                const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 2000);
-
+                // 1. 發送 POST 請求至指定 API
                 const response = await fetch(backendUrl, {
                     method: "POST",
-                    headers: { 
-                        "Content-Type": "application/json",
-                        "Accept": "application/json"
-                    },
-                    body: JSON.stringify({ image_base64: pureBase64 }),
-                    signal: controller.signal
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ image_base64: pureBase64 })
                 });
 
-                clearTimeout(timeoutId);
-
-                if (!response.ok) throw new Error("後端邊緣節點回應異常");
+                if (!response.ok) throw new Error("API 連線失敗");
 
                 const aiResult = await response.json();
                 
-                if (!aiResult || !aiResult.food_name) {
-                    throw new Error("回傳資料格式不符");
-                }
-
-                statusText.innerHTML = `YOLO 分析完成：【${aiResult.food_name}】，數據上傳中...`;
-
+                // 2. 存入後端回傳的真實辨識結果
                 await addDoc(collection(db, "foods"), {
-                    food_name: aiResult.food_name,
-                    status: aiResult.info || "分析完成", 
-                    is_fresh: aiResult.is_fresh !== false,
-                    location: aiResult.location || "校園共享中心",
+                    food_name: aiResult.food_name || "偵測品項",
+                    status: aiResult.info || "檢測完成", 
+                    is_fresh: aiResult.is_fresh,
+                    location: aiResult.location || "共享食庫",
                     photo_data: fullBase64,
                     created_at: serverTimestamp()
                 });
-
-                statusText.innerHTML = `成功登錄物資：${aiResult.food_name}。`;
                 
-                if (aiResult.is_fresh) {
-                    alert(`🟢【食安檢驗通過 · 准予共享】\n\n品項：${aiResult.food_name}\n結果：${aiResult.info}\n\n此物資狀態良好，已發布至「共享鮮食牆」供師生領取。`);
-                } else {
-                    alert(`🚨【食安警告：未達食用標準】\n\n品項：${aiResult.food_name}\n結果：${aiResult.info}\n\n安全機制已主動攔截！此物資已強制分流至「綠能堆肥區」進行資源化處置。`);
-                }
+                alert(`檢測成功：${aiResult.is_fresh ? '新鮮度合格' : '品質異常'}`);
 
             } catch (e) {
-                console.warn("⚠️ 啟動 Fail-Safe 去化防禦機制 (走擬真模擬通道):", e);
-                statusText.innerHTML = "<span style='color:#94a3b8;'>⚠️ 區域網路推論節點回應異常，已自動啟動 Fail-Safe 防禦機制。</span>";
-                
-                // 💡【已完全修復】：修正原先將字串當作陣列索引、以及拼字錯誤導致鏡頭當掉的 Bug
+                // 3. 只有當 fetch 真實失敗時，才會執行這裡的模擬模式
+                console.warn("後端離線，啟用模擬模式:", e);
                 const randomIndex = Math.floor(Math.random() * kaggleDatasetPool.length);
                 const finalMatched = kaggleDatasetPool[randomIndex];
-                const simulatedStatus = `腐爛度 ${finalMatched.spoiledRate}`;
+                const simulatedStatus = finalMatched.isFresh ? `新鮮度 ${finalMatched.rate}` : `腐爛度 ${finalMatched.rate}`;
                 
                 await addDoc(collection(db, "foods"), {
                     food_name: finalMatched.name,
@@ -280,13 +239,10 @@
                     created_at: serverTimestamp()
                 });
                 
-                if (finalMatched.isFresh) {
-                    alert(`🟢【食安檢驗通過 · 准予共享】\n\n品項：${finalMatched.name}\n結果：${simulatedStatus}\n\n此物資狀態良好，已發布至「共享鮮食牆」供師生領取。`);
-                } else {
-                    alert(`🚨【食安警告：未達食用標準】\n\n品項：${finalMatched.name}\n結果：${simulatedStatus}\n\n安全機制已主動攔截！此物資已強制分流至「綠能堆肥區」進行資源化處置。`);
-                }
+                alert(`模擬模式檢測完成：${finalMatched.name}\n結果：${simulatedStatus}`);
             } finally {
                 snapBtn.disabled = false;
+                statusText.innerText = "系統已就緒。請將物資對準方框，並點擊下方按鈕登錄。";
                 loadFoodDataContainers();
             }
         }
@@ -305,24 +261,19 @@
                 querySnapshot.forEach((doc) => {
                     const data = doc.data();
                     const timeString = data.created_at ? new Date(data.created_at.seconds * 1000).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : "剛剛";
-                    
-                    const imageHtml = data.photo_data 
-                        ? `<img src="${data.photo_data}" class="item-thumb" alt="物資照片">`
-                        : `<div class="item-thumb" style="display:flex;align-items:center;justify-content:center;background:#181f1c;color:#475569;">📦</div>`;
-
                     const isItemFresh = data.is_fresh !== false;
                     const badgeClass = isItemFresh ? "badge-fresh" : "badge-spoiled";
 
                     const itemCardHtml = `
                         <div class="item-card">
-                            ${imageHtml}
+                            <img src="${data.photo_data}" class="item-thumb">
                             <div class="item-details">
                                 <div class="item-name">${data.food_name}</div>
                                 <div class="item-meta">📍 ${data.location}</div>
-                                <div style="margin-top: 2px;">
+                                <div style="margin-top: 4px;">
                                     <span class="status-badge ${badgeClass}">${data.status}</span>
-                                    <span class="time-label">${timeString} 登錄</span>
                                 </div>
+                                <span class="time-label">${timeString} 登錄</span>
                             </div>
                         </div>
                     `;
