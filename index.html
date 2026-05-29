@@ -1,310 +1,431 @@
 <!DOCTYPE html>
-<html lang="zh-TW">
+<html lang="zh-Hant">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>共享食物銀行</title>
-    <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-        body {
-            background: #0b0f0d;
-            color: #f1f5f3;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            min-height: 100vh;
-            padding: 24px 16px;
-        }
-
-        .app-container {
-            width: 100%;
-            max-width: 460px;
-            background: rgba(255, 255, 255, 0.01);
-            border: 1px solid rgba(255, 255, 255, 0.06);
-            border-radius: 28px;
-            padding: 24px;
-            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
-        }
-
-        header { text-align: left; margin-bottom: 24px; }
-        h1 { font-size: 24px; font-weight: 600; color: #ffffff; letter-spacing: -0.5px; }
-        .subtitle { font-size: 13px; color: #64748b; margin-top: 2px; }
-
-        .nav-tabs {
-            display: flex; background: #121815; padding: 4px; border-radius: 14px; margin-bottom: 24px;
-            border: 1px solid rgba(255, 255, 255, 0.02);
-        }
-        .tab-btn {
-            flex: 1; padding: 12px 6px; font-size: 13px; background: none; border: none; color: #64748b;
-            cursor: pointer; font-weight: 500; border-radius: 10px; transition: all 0.2s ease;
-            white-space: nowrap;
-        }
-        .tab-btn.active {
-            background: #1c2621; color: #4ade80; font-weight: 600;
-        }
-
-        .tab-content { display: none; }
-        .tab-content.active { display: block; animation: slideUp 0.3s ease-out; }
-
-        .camera-viewport {
-            position: relative; width: 100%; aspect-ratio: 4 / 3; border-radius: 18px;
-            overflow: hidden; background: #000000; border: 1px solid rgba(255, 255, 255, 0.08);
-        }
-        video { width: 100%; height: 100%; object-fit: cover; }
-        .focus-frame {
-            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            width: 75%; height: 65%; border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 14px; pointer-events: none;
-        }
-
-        .action-btn {
-            width: 100%; margin-top: 20px; padding: 16px; font-size: 15px; font-weight: 600;
-            color: #000000; background: #4ade80; border: none; border-radius: 12px; cursor: pointer;
-            transition: opacity 0.2s; letter-spacing: 0.5px;
-        }
-        .action-btn:active { opacity: 0.85; }
-        .action-btn:disabled { background: #16221c; color: #475569; cursor: not-allowed; }
-
-        .log-panel {
-            margin-top: 16px; background: #121815; border-radius: 12px; padding: 14px;
-            font-size: 13px; color: #94a3b8; text-align: left; line-height: 1.5;
-        }
-        .log-label { font-size: 11px; font-weight: 600; color: #475569; letter-spacing: 0.5px; margin-bottom: 4px; }
-
-        .food-list { display: flex; flex-direction: column; gap: 12px; max-height: 440px; overflow-y: auto; padding-right: 4px; }
-        .food-list::-webkit-scrollbar { width: 4px; }
-        .food-list::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.08); border-radius: 4px; }
-        .empty-state { color: #475569; font-size: 14px; padding: 40px 0; text-align: center; }
-
-        .item-card {
-            background: #121815; border: 1px solid rgba(255, 255, 255, 0.01);
-            border-radius: 16px; display: flex; padding: 14px; gap: 14px; align-items: center;
-        }
-        .item-thumb {
-            width: 70px; height: 70px; border-radius: 10px; object-fit: cover; background: #070a09;
-        }
-        .item-details { flex: 1; display: flex; flex-direction: column; gap: 4px; text-align: left; }
-        .item-name { font-size: 15px; font-weight: 500; color: #ffffff; }
-        .item-meta { font-size: 12px; color: #64748b; }
-        
-        .status-badge { font-size: 11px; padding: 3px 8px; border-radius: 5px; font-weight: 500; display: inline-block; width: fit-content; }
-        .badge-fresh { background: rgba(74, 222, 128, 0.06); color: #4ade80; border: 1px solid rgba(74, 222, 128, 0.15); }
-        .badge-spoiled { background: rgba(248, 113, 113, 0.06); color: #f87171; border: 1px solid rgba(248, 113, 113, 0.15); }
-        .time-label { font-size: 11px; color: #475569; margin-left: 8px; }
-
-        #capture-canvas { display: none; }
-        @keyframes slideUp { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="校園剩食與廚餘智慧管理平台 - 運用 YOLO AI 影像技術識別超商即期食品新鮮度，整合餐廳便當、廚餘及校園活動餐盒，攜手減少校園食物浪費。">
+  <title>校園剩食與廚餘智慧管理系統</title>
+  
+  <!-- CSS Stylesheet -->
+  <link rel="stylesheet" href="style.css">
+  
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
 
-    <div class="app-container">
-        <header>
-            <h1>共享食物銀行</h1>
-            <div class="subtitle">共享食物銀行系統 · 永續流向管理</div>
-        </header>
-        
-        <div class="nav-tabs">
-            <button class="tab-btn active" onclick="switchTab('upload-tab')">物件登錄</button>
-            <button class="tab-btn" onclick="switchTab('fresh-board-tab')" id="btn-load-fresh">🥬 共享食庫</button>
-            <button class="tab-btn" onclick="switchTab('spoiled-board-tab')" id="btn-load-spoiled">♻️ 綠能堆肥區</button>
-        </div>
-
-        <div id="upload-tab" class="tab-content active">
-            <div class="camera-viewport">
-                <video id="webcam" autoplay playsinline muted></video>
-                <div class="focus-frame"></div>
-            </div>
-            
-            <button class="action-btn" id="snap-btn" onclick="window.triggerIdentifyAndUpload()">拍攝並進行檢驗登錄</button>
-            
-            <div class="log-panel">
-                <div class="log-label">SYSTEM LOG</div>
-                <div id="status-text">相機模組載入中，請給予相機使用權限...</div>
-            </div>
-        </div>
-
-        <div id="fresh-board-tab" class="tab-content">
-            <div class="food-list" id="fresh-list-container">
-                <p class="empty-state">物資庫同步中...</p>
-            </div>
-        </div>
-
-        <div id="spoiled-board-tab" class="tab-content">
-            <div class="food-list" id="spoiled-list-container">
-                <p class="empty-state">去化數據同步中...</p>
-            </div>
-        </div>
+  <!-- Main Navigation Header -->
+  <header>
+    <div class="logo">
+      <i class="fas fa-leaf"></i>
+      <span>校園剩食智慧管理平台</span>
     </div>
+    <div class="nav-links">
+      <button class="nav-btn active" data-target-section="public-hub">
+        <i class="fas fa-hand-holding-heart"></i> 前台剩食共享
+      </button>
+      <button class="nav-btn nav-btn-admin" data-target-section="admin-panel">
+        <i class="fas fa-chart-line"></i> 後台管理中心
+      </button>
+      <button class="nav-btn" onclick="openModal('settings-modal')" title="Firebase 設定">
+        <i class="fas fa-cog"></i>
+      </button>
+    </div>
+  </header>
 
-    <canvas id="capture-canvas" width="320" height="240"></canvas>
+  <div class="container">
+    
+    <!-- ======================================= -->
+    <!-- 1. PUBLIC HUB VIEW                      -->
+    <!-- ======================================= -->
+    <section id="public-hub" class="view-section active">
+      
+      <!-- Hero Banner -->
+      <div class="hero-banner">
+        <h1>珍愛校園物資，從每口食物開始</h1>
+        <p>在這裡，您可以免費索取超商即將過期的鮮食、學校餐廳未售完的精美便當、以及各類活動剩餘的優質餐盒。讓剩食不再是浪費！</p>
+        <div style="font-size: 0.9rem; color: var(--primary); font-weight: 700;">
+          <i class="fas fa-check-circle"></i> 搭載 YOLO AI 影像辨識系統，即時把關超商食品新鮮度
+        </div>
+      </div>
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-        import { getFirestore, collection, addDoc, getDocs, query, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-
-        const firebaseConfig = {
-            apiKey: "AIzaSyBZWDL92iOl9i-bfAzxzjwhysTQ049Zhg",
-            authDomain: "food-sharing-bank.firebaseapp.com",
-            projectId: "food-sharing-bank",
-            storageBucket: "food-sharing-bank.firebasestorage.app",
-            messagingSenderId: "83109359198",
-            appId: "1:83109359198:web:5b800603f43a1a1e2b8ecf",
-            measurementId: "G-K56TP7PXDN"
-        };
-
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-
-        const video = document.getElementById('webcam');
-        const snapBtn = document.getElementById('snap-btn');
-        const statusText = document.getElementById('status-text');
-        const freshListContainer = document.getElementById('fresh-list-container');
-        const spoiledListContainer = document.getElementById('spoiled-list-container');
+      <!-- Search Filters Drawer -->
+      <div class="search-filter-box">
+        <div class="search-input-wrapper">
+          <i class="fas fa-search"></i>
+          <input type="text" id="search-keyword" class="search-input" placeholder="搜尋項目名稱、備註說明 (例如: 鮪魚、工學一館)...">
+        </div>
         
-        const captureCanvas = document.getElementById('capture-canvas');
-        const captureCtx = captureCanvas.getContext('2d');
+        <div class="filter-grid">
+          <div class="filter-group">
+            <label for="filter-category">食品類別</label>
+            <select id="filter-category" class="filter-select">
+              <option value="all">全部種類</option>
+              <option value="expiring">即期超商食品</option>
+              <option value="bento">餐廳未賣完便當</option>
+              <option value="event">學校活動餐盒剩餘</option>
+              <option value="waste">餐廳廚餘 (堆肥原料)</option>
+            </select>
+          </div>
+          
+          <div class="filter-group">
+            <label for="filter-freshness">新鮮度級別</label>
+            <select id="filter-freshness" class="filter-select">
+              <option value="all">不限新鮮度</option>
+              <option value="high">極佳 (80% - 100%)</option>
+              <option value="medium">一般 (50% - 79%)</option>
+              <option value="low">待處置 (&lt; 50%)</option>
+            </select>
+          </div>
 
-        const kaggleDatasetPool = [
-            { name: "食材", isFresh: true, loc: "學餐大樓 B1", rate: "98.5%" },
-            { name: "食材", isFresh: false, loc: "生活機能大樓", rate: "92.3%" }
-        ];
+          <div class="filter-group">
+            <label for="filter-expiry">保存期限</label>
+            <select id="filter-expiry" class="filter-select">
+              <option value="all">不限時間</option>
+              <option value="today">今天到期</option>
+              <option value="tomorrow">明天到期</option>
+              <option value="3days">3 天內到期</option>
+            </select>
+          </div>
+        </div>
+      </div>
 
-        async function startAutomationSystem() {
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" }, audio: false });
-                video.srcObject = stream;
-                statusText.innerText = "系統已就緒。請將物資對準方框，並點擊下方按鈕登錄。";
-            } catch (err) {
-                statusText.innerHTML = "<span style='color:#f87171;'>相機啟動異常。請確認已開啟相機使用權限。</span>";
-            }
-        }
+      <!-- Card Listings Grid -->
+      <h2 style="font-family: var(--font-heading); margin-bottom: 1.5rem; font-size: 1.5rem; display: flex; align-items: center; gap: 0.5rem;">
+        <i class="fas fa-hamburger" style="color: var(--primary);"></i> 最新開放索取剩食
+      </h2>
+      <div id="listings-container" class="listings-grid">
+        <!-- Rendered dynamically via app.js -->
+      </div>
 
-        const backendUrl = "http://10.220.73.181:8000/predict";
+    </section>
 
-        window.triggerIdentifyAndUpload = async function() {
-            if (video.readyState < 2) {
-                alert("視訊串流加載中，請稍候再試。");
-                return;
-            }
+    <!-- ======================================= -->
+    <!-- 2. ADMIN CONSOLE VIEW                   -->
+    <!-- ======================================= -->
+    <section id="admin-panel" class="view-section">
+      
+      <!-- Top Stats Row -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon green">
+            <i class="fas fa-trash-restore"></i>
+          </div>
+          <div class="stat-info">
+            <h3>已救回剩食總數</h3>
+            <p id="stat-items-saved">0 件</p>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon orange">
+            <i class="fas fa-utensils"></i>
+          </div>
+          <div class="stat-info">
+            <h3>累計未售便當</h3>
+            <p id="stat-bento-count">0 個</p>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon purple">
+            <i class="fas fa-box"></i>
+          </div>
+          <div class="stat-info">
+            <h3>活動剩餘餐盒</h3>
+            <p id="stat-bento-count">0 個</p>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon blue">
+            <i class="fas fa-seedling"></i>
+          </div>
+          <div class="stat-info">
+            <h3>廚餘收集重量</h3>
+            <p id="stat-total-weight">0.0 kg</p>
+          </div>
+        </div>
+      </div>
 
-            snapBtn.disabled = true;
-            statusText.innerText = "正在擷取視訊影格，傳送至本地邊緣運算中心...";
-
-            captureCanvas.width = video.videoWidth || 320;
-            captureCanvas.height = video.videoHeight || 240;
-            captureCtx.drawImage(video, 0, 0, captureCanvas.width, captureCanvas.height);
+      <!-- Split Layout -->
+      <div class="admin-layout">
+        
+        <!-- Left Column: Registration Form -->
+        <div class="admin-sidebar">
+          <div class="admin-card">
+            <h2 id="form-title-text"><i class="fas fa-plus-circle" style="color: var(--primary);"></i> 登錄 / 編輯食物項目</h2>
             
-            // 取得完整的 DataURL 並處理為純 Base64，移除前面的 metadata
-            let fullBase64 = captureCanvas.toDataURL('image/jpeg', 0.4); 
-            let pureBase64 = fullBase64.split(',')[1]; 
+            <form id="admin-food-form">
+              <!-- Item name -->
+              <div class="form-group">
+                <label for="food-name">項目名稱 *</label>
+                <input type="text" id="food-name" class="form-input" placeholder="請輸入食品或項目名稱" required>
+              </div>
 
-            try {
-                // 1. 發送 POST 請求至指定 API
-                const response = await fetch(backendUrl, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ image_base64: pureBase64 })
-                });
+              <!-- Category -->
+              <div class="form-group">
+                <label for="food-category">物資類別 *</label>
+                <select id="food-category" class="form-select" required>
+                  <option value="expiring">1. 即將過期的超商食品</option>
+                  <option value="bento">2. 餐廳未賣完之可食便當</option>
+                  <option value="waste">3. 餐廳的廚餘物資 (堆肥/飼料)</option>
+                  <option value="event">4. 學校活動餐盒剩餘</option>
+                </select>
+              </div>
 
-                if (!response.ok) throw new Error("API 連線失敗");
+              <!-- Expiring Specific Sub-fields -->
+              <div id="expiring-food-fields">
+                <div class="form-group">
+                  <label>相片與 YOLO 辨識 *</label>
+                  <div class="camera-trigger-zone" id="camera-trigger">
+                    <i class="fas fa-camera-retro"></i>
+                    <p>搭配手機鏡頭拍照辨識 (YOLO AI)</p>
+                    <span style="font-size: 0.75rem; color: var(--text-muted);">或點選上傳本地食品照片</span>
+                  </div>
+                  <!-- Hidden inputs -->
+                  <input type="file" id="image-file-input" accept="image/*" style="display: none;">
+                </div>
 
-                const aiResult = await response.json();
-                
-                // 2. 存入後端回傳的真實辨識結果
-                await addDoc(collection(db, "foods"), {
-                    food_name: aiResult.food_name || "偵測品項",
-                    status: aiResult.info || "檢測完成", 
-                    is_fresh: aiResult.is_fresh,
-                    location: aiResult.location || "共享食庫",
-                    photo_data: fullBase64,
-                    created_at: serverTimestamp()
-                });
-                
-                alert(`檢測成功：${aiResult.is_fresh ? '新鮮度合格' : '品質異常'}`);
+                <div class="form-group row-group">
+                  <div>
+                    <label for="food-mfg-date">製造日期</label>
+                    <input type="date" id="food-mfg-date" class="form-input">
+                  </div>
+                  <div>
+                    <label for="food-freshness">新鮮度級別 (%)</label>
+                    <input type="number" id="food-freshness" class="form-input" min="0" max="100" value="80" placeholder="0-100">
+                  </div>
+                </div>
+              </div>
 
-            } catch (e) {
-                // 3. 只有當 fetch 真實失敗時，才會執行這裡的模擬模式
-                console.warn("後端離線，啟用模擬模式:", e);
-                const randomIndex = Math.floor(Math.random() * kaggleDatasetPool.length);
-                const finalMatched = kaggleDatasetPool[randomIndex];
-                const simulatedStatus = finalMatched.isFresh ? `新鮮度 ${finalMatched.rate}` : `腐爛度 ${finalMatched.rate}`;
-                
-                await addDoc(collection(db, "foods"), {
-                    food_name: finalMatched.name,
-                    status: simulatedStatus,
-                    is_fresh: finalMatched.isFresh,
-                    location: finalMatched.loc,
-                    photo_data: fullBase64,
-                    created_at: serverTimestamp()
-                });
-                
-                alert(`模擬模式檢測完成：${finalMatched.name}\n結果：${simulatedStatus}`);
-            } finally {
-                snapBtn.disabled = false;
-                statusText.innerText = "系統已就緒。請將物資對準方框，並點擊下方按鈕登錄。";
-                loadFoodDataContainers();
-            }
-        }
+              <!-- Expiry date -->
+              <div class="form-group">
+                <label for="food-exp-date">保存期限 / 消耗時限 *</label>
+                <input type="date" id="food-exp-date" class="form-input" required>
+              </div>
 
-        async function loadFoodDataContainers() {
-            try {
-                const q = query(collection(db, "foods"), orderBy("created_at", "desc"));
-                const querySnapshot = await getDocs(q);
-                
-                freshListContainer.innerHTML = "";
-                spoiledListContainer.innerHTML = "";
+              <!-- Status -->
+              <div class="form-group">
+                <label for="food-status">處置狀況</label>
+                <select id="food-status" class="form-select">
+                  <option value="available">可索取 (Available)</option>
+                  <option value="claimed">已被索取 (Claimed)</option>
+                  <option value="disposed">已進行廢棄處置 (Disposed)</option>
+                </select>
+              </div>
 
-                let freshCount = 0;
-                let spoiledCount = 0;
+              <!-- Notes -->
+              <div class="form-group">
+                <label for="food-notes">詳細備註 (包含放置位置、廚餘重量等)</label>
+                <textarea id="food-notes" class="form-textarea" placeholder="例如: 放置於工學大樓A棟3樓休息區、廚餘約 8.5kg 裝桶。"></textarea>
+              </div>
 
-                querySnapshot.forEach((doc) => {
-                    const data = doc.data();
-                    const timeString = data.created_at ? new Date(data.created_at.seconds * 1000).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : "剛剛";
-                    const isItemFresh = data.is_fresh !== false;
-                    const badgeClass = isItemFresh ? "badge-fresh" : "badge-spoiled";
+              <!-- Submit Buttons -->
+              <div style="display: flex; gap: 0.8rem; margin-top: 1rem;">
+                <button type="button" class="btn btn-secondary" onclick="resetAdminForm()" style="flex:1;">
+                  重設
+                </button>
+                <button type="submit" id="submit-food-btn" class="btn" style="flex:2;">
+                  <i class="fas fa-plus"></i> 新增食物項目
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
 
-                    const itemCardHtml = `
-                        <div class="item-card">
-                            <img src="${data.photo_data}" class="item-thumb">
-                            <div class="item-details">
-                                <div class="item-name">${data.food_name}</div>
-                                <div class="item-meta">📍 ${data.location}</div>
-                                <div style="margin-top: 4px;">
-                                    <span class="status-badge ${badgeClass}">${data.status}</span>
-                                </div>
-                                <span class="time-label">${timeString} 登錄</span>
-                            </div>
-                        </div>
-                    `;
+        <!-- Right Column: Dashboard Tables & Live Charts -->
+        <div style="display: flex; flex-direction: column; gap: 2rem;">
+          
+          <!-- Chart visualization -->
+          <div class="charts-container">
+            <div class="chart-box" style="grid-column: 1 / -1;">
+              <h3>校園剩食種類登錄比例 (Live Stats)</h3>
+              <div class="bar-chart">
+                <div class="bar-row">
+                  <div class="bar-label">即期超商</div>
+                  <div class="bar-wrapper">
+                    <div id="chart-fill-expiring" class="bar-fill expiring" style="width: 0%"></div>
+                  </div>
+                  <div id="chart-val-expiring" class="bar-value">0 筆</div>
+                </div>
+                <div class="bar-row">
+                  <div class="bar-label">餐廳便當</div>
+                  <div class="bar-wrapper">
+                    <div id="chart-fill-bento" class="bar-fill bento" style="width: 0%"></div>
+                  </div>
+                  <div id="chart-val-bento" class="bar-value">0 筆</div>
+                </div>
+                <div class="bar-row">
+                  <div class="bar-label">活動剩食</div>
+                  <div class="bar-wrapper">
+                    <div id="chart-fill-event" class="bar-fill event" style="width: 0%"></div>
+                  </div>
+                  <div id="chart-val-event" class="bar-value">0 筆</div>
+                </div>
+                <div class="bar-row">
+                  <div class="bar-label">餐廳廚餘</div>
+                  <div class="bar-wrapper">
+                    <div id="chart-fill-waste" class="bar-fill waste" style="width: 0%"></div>
+                  </div>
+                  <div id="chart-val-waste" class="bar-value">0 筆</div>
+                </div>
+              </div>
+            </div>
+          </div>
 
-                    if (isItemFresh) {
-                        freshListContainer.innerHTML += itemCardHtml;
-                        freshCount++;
-                    } else {
-                        spoiledListContainer.innerHTML += itemCardHtml;
-                        spoiledCount++;
-                    }
-                });
+          <!-- Inventory List -->
+          <div class="admin-table-container">
+            <h2 style="font-family: var(--font-heading); margin-bottom: 1.2rem; font-size: 1.2rem; display: flex; align-items: center; gap: 0.5rem;">
+              <i class="fas fa-list-ul" style="color: var(--primary);"></i> 現存登錄項目清冊
+            </h2>
+            <table class="admin-table">
+              <thead>
+                <tr>
+                  <th>名稱</th>
+                  <th>類別</th>
+                  <th>期限/新鮮度</th>
+                  <th>狀態</th>
+                  <th>操作</th>
+                </tr>
+              </thead>
+              <tbody id="admin-table-body">
+                <!-- Rendered dynamically via app.js -->
+              </tbody>
+            </table>
+          </div>
 
-                if (freshCount === 0) freshListContainer.innerHTML = '<p class="empty-state">🍎 目前共享鮮食牆暫無可領取物資</p>';
-                if (spoiledCount === 0) spoiledListContainer.innerHTML = '<p class="empty-state">🍂 目前綠能堆肥區暫無待清運資材</p>';
+        </div>
 
-            } catch (error) {
-                console.error(error);
-            }
-        }
+      </div>
 
-        window.addEventListener("load", startAutomationSystem);
-        document.getElementById('btn-load-fresh').addEventListener('click', loadFoodDataContainers);
-        document.getElementById('btn-load-spoiled').addEventListener('click', loadFoodDataContainers);
+    </section>
 
-        window.switchTab = function(tabId) {
-            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
-            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-            document.getElementById(tabId).classList.add('active');
-            event.currentTarget.classList.add('active');
-        }
-    </script>
+  </div>
+
+  <!-- ======================================= -->
+  <!-- 3. MODALS SYSTEM                        -->
+  <!-- ======================================= -->
+
+  <!-- Detail Food Information Modal -->
+  <div id="detail-modal" class="modal-overlay">
+    <div class="modal-container">
+      <div class="modal-header">
+        <h2>食物詳細履歷資訊</h2>
+        <button class="modal-close" onclick="closeModal('detail-modal')">&times;</button>
+      </div>
+      <div class="modal-body" id="detail-modal-body">
+        <!-- Rendered dynamically -->
+      </div>
+      <div class="modal-footer" id="detail-modal-footer">
+        <button class="btn btn-secondary" onclick="closeModal('detail-modal')">關閉</button>
+        <button class="btn">立即索取</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- YOLO AI Camera Scan Modal -->
+  <div id="camera-modal" class="modal-overlay">
+    <div class="modal-container" style="max-width: 500px;">
+      <div class="modal-header">
+        <h2>YOLO AI 智慧鮮度偵測</h2>
+        <button class="modal-close" onclick="closeModal('camera-modal')">&times;</button>
+      </div>
+      <div class="modal-body" style="padding: 1rem;">
+        
+        <div class="yolo-scan-container">
+          <div class="yolo-camera-box">
+            <!-- Glowing Scan Line -->
+            <div class="scan-line"></div>
+            <!-- Bounding box simulation -->
+            <div class="yolo-box" id="yolo-box-overlay">
+              <span class="yolo-label" id="yolo-label-span">御飯糰 94%</span>
+            </div>
+            
+            <video id="yolo-video" class="yolo-video" autoplay playsinline></video>
+            <canvas id="yolo-photo-canvas" class="yolo-photo-canvas"></canvas>
+          </div>
+
+          <!-- Interactive Results Display -->
+          <div class="yolo-results-panel" id="yolo-result-panel">
+            <p id="yolo-result-text">偵測中...</p>
+          </div>
+        </div>
+
+      </div>
+      <div class="modal-footer" style="justify-content: space-between;">
+        <div>
+          <button class="btn btn-secondary" onclick="document.getElementById('image-file-input').click()" title="使用相簿">
+            <i class="far fa-images"></i> 本地上傳
+          </button>
+        </div>
+        <div style="display: flex; gap: 0.5rem;">
+          <button class="btn btn-secondary" onclick="closeModal('camera-modal')">取消</button>
+          <button class="btn btn-danger" id="camera-capture-btn" onclick="capturePhoto()">
+            <i class="fas fa-camera"></i> 拍攝相片並分析
+          </button>
+          <button class="btn" onclick="applyYOLOResults()">
+            <i class="fas fa-check"></i> 套用結果
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Firebase Connection Configuration Modal -->
+  <div id="settings-modal" class="modal-overlay">
+    <div class="modal-container">
+      <div class="modal-header">
+        <h2>Firebase 資料庫連線配置</h2>
+        <button class="modal-close" onclick="closeModal('settings-modal')">&times;</button>
+      </div>
+      <form id="firebase-config-form">
+        <div class="modal-body">
+          <div class="settings-tip">
+            <strong>提示：</strong> 系統預設使用 LocalStorage 作為資料庫（演示模式）。若需要多裝置資料同步，請在下方輸入您 Firebase 專案的 Web App Config 參數。儲存後網頁將自動載入 Firebase 資料庫。
+          </div>
+          
+          <div class="form-group">
+            <label>API Key (apiKey)</label>
+            <input type="text" id="fb-api-key" class="form-input" placeholder="AIzaSy...">
+          </div>
+          <div class="form-group">
+            <label>Auth Domain (authDomain)</label>
+            <input type="text" id="fb-auth-domain" class="form-input" placeholder="project-name.firebaseapp.com">
+          </div>
+          <div class="form-group row-group">
+            <div>
+              <label>Project ID (projectId)</label>
+              <input type="text" id="fb-project-id" class="form-input" placeholder="project-name">
+            </div>
+            <div>
+              <label>Storage Bucket (storageBucket)</label>
+              <input type="text" id="fb-storage-bucket" class="form-input" placeholder="project-name.appspot.com">
+            </div>
+          </div>
+          <div class="form-group row-group">
+            <div>
+              <label>Messaging Sender ID</label>
+              <input type="text" id="fb-messaging-sender-id" class="form-input" placeholder="1234567890">
+            </div>
+            <div>
+              <label>App ID (appId)</label>
+              <input type="text" id="fb-app-id" class="form-input" placeholder="1:12345:web:abcd...">
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="closeModal('settings-modal')">取消</button>
+          <button type="button" class="btn btn-danger" onclick="document.getElementById('firebase-config-form').reset();" style="margin-right:auto;">清空</button>
+          <button type="submit" class="btn">
+            <i class="fas fa-save"></i> 儲存配置並重新載入
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Toast Message container -->
+  <div id="toast-container"></div>
+
+  <!-- Main JavaScript App Module Entry -->
+  <script type="module" src="app.js"></script>
 </body>
 </html>
