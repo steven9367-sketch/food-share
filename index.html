@@ -246,16 +246,18 @@
 
                     const motionPercentage = (changedPixels / (motionCanvas.width * motionCanvas.height)) * 100;
 
-                    if (motionPercentage > 12) {
+                    if (motionPercentage > 25) {
                         stableFrameCount = 0; 
                         statusText.innerText = "【追蹤中】偵測到鏡頭大幅移動，正在尋找新剩食物資...";
                         camContainer.className = "camera-container searching";
-                    } else if (motionPercentage > 1 && motionPercentage < 8) {
+// 把 8 放寬到 18（手稍微有一點點小抖動、或是手機在對焦，也算你穩定！）
+                    } else if (motionPercentage >= 0 && motionPercentage <= 18) {
                         stableFrameCount++;
-                        statusText.innerText = `【目標鎖定】偵測到剩食物體！請保持手部靜止... (${Math.min(stableFrameCount * 8, 100)}%)`;
+                        statusText.innerText = `【目標鎖定】偵測到剩食物體！請保持手部靜止... (${Math.min(stableFrameCount * 12, 100)}%)`;
                         camContainer.className = "camera-container capturing";
 
-                        if (stableFrameCount >= 13) {
+    // 把 13 改成 8（只需要連續穩定 0.8 秒就直接拍照，不等了！）
+                        if (stableFrameCount >= 8) {
                             autoTriggerUpload();
                         }
                     }
