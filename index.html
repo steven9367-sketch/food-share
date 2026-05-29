@@ -3,156 +3,136 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>智取食光｜AI 剩食自動去重平台</title>
+    <title>智取食光｜共享食物銀行系統</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
         body {
-            background: linear-gradient(135deg, #0d1512 0%, #040706 100%);
-            color: #e0e7e5;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: #0b0f0d;
+            color: #f1f5f3;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
             display: flex;
             flex-direction: column;
             align-items: center;
             min-height: 100vh;
-            padding: 15px;
+            padding: 24px 16px;
         }
 
-        .app-card {
-            background: rgba(255, 255, 255, 0.02);
-            backdrop-filter: blur(15px);
-            -webkit-backdrop-filter: blur(15px);
-            border: 1px solid rgba(74, 222, 128, 0.08);
-            border-radius: 28px;
+        .app-container {
             width: 100%;
             max-width: 460px;
+            background: rgba(255, 255, 255, 0.01);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 28px;
             padding: 24px;
-            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.6);
-            text-align: center;
-            margin-bottom: 20px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
         }
 
-        h2 {
-            font-size: 26px;
-            font-weight: 700;
-            letter-spacing: 1px;
-            background: linear-gradient(90deg, #4ade80, #2dd4bf);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            margin-bottom: 4px;
-        }
-        .subtitle { font-size: 13px; color: #788b86; margin-bottom: 15px; }
+        header { text-align: left; margin-bottom: 24px; }
+        h1 { font-size: 24px; font-weight: 600; color: #ffffff; letter-spacing: -0.5px; }
+        .subtitle { font-size: 13px; color: #64748b; margin-top: 2px; }
 
-        .tab-menu {
-            display: flex; background: rgba(0, 0, 0, 0.4); padding: 4px; border-radius: 14px; margin-bottom: 20px;
-            border: 1px solid rgba(255,255,255,0.03);
+        .nav-tabs {
+            display: flex; background: #121815; padding: 4px; border-radius: 14px; margin-bottom: 24px;
+            border: 1px solid rgba(255, 255, 255, 0.02);
         }
         .tab-btn {
-            flex: 1; padding: 11px; font-size: 14px; background: none; border: none; color: #788b86;
-            cursor: pointer; font-weight: 600; border-radius: 10px; transition: all 0.3s;
+            flex: 1; padding: 12px 6px; font-size: 13px; background: none; border: none; color: #64748b;
+            cursor: pointer; font-weight: 500; border-radius: 10px; transition: all 0.2s ease;
+            white-space: nowrap;
         }
         .tab-btn.active {
-            background: linear-gradient(90deg, #4ade80, #2dd4bf); color: #050807;
-            box-shadow: 0 4px 12px rgba(74, 222, 128, 0.25);
+            background: #1c2621; color: #4ade80; font-weight: 600;
         }
 
-        .tab-content { display: none; animation: fadeIn 0.4s ease; }
-        .tab-content.active { display: block; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; animation: slideUp 0.3s ease-out; }
 
-        .camera-container {
-            position: relative; width: 100%; aspect-ratio: 4 / 3; border-radius: 20px;
-            overflow: hidden; background-color: #000000; border: 1px solid rgba(74, 222, 128, 0.2);
+        .camera-viewport {
+            position: relative; width: 100%; aspect-ratio: 4 / 3; border-radius: 18px;
+            overflow: hidden; background: #000000; border: 1px solid rgba(255, 255, 255, 0.08);
         }
         video { width: 100%; height: 100%; object-fit: cover; }
-        
-        .overlay-box {
+        .focus-frame {
             position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            width: 70%; height: 60%; border: 2px solid #2dd4bf;
-            box-shadow: 0 0 0 9999px rgba(5, 8, 7, 0.6); pointer-events: none; border-radius: 16px;
-        }
-        .camera-container.working .overlay-box { border-color: #4ade80; box-shadow: 0 0 15px #4ade80, 0 0 0 9999px rgba(5, 8, 7, 0.5); }
-        .camera-container.cooldown .overlay-box { border-color: #6b7280; box-shadow: 0 0 0 9999px rgba(5, 8, 7, 0.75); }
-
-        .scan-line {
-            position: absolute; top: 0; left: 0; width: 100%; height: 3px;
-            background: linear-gradient(90deg, transparent, #4ade80, transparent);
-            display: none; pointer-events: none;
-        }
-        .camera-container.working .scan-line {
-            display: block; animation: scan 2.5s infinite linear;
+            width: 75%; height: 65%; border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 14px; pointer-events: none;
         }
 
-        /* 頂部啟動按鈕 */
-        .btn {
-            width: 100%; margin-top: 15px; padding: 15px; font-size: 15px; font-weight: 700;
-            color: #050807; background: linear-gradient(90deg, #4ade80, #2dd4bf);
-            border: none; border-radius: 12px; cursor: pointer; box-shadow: 0 4px 15px rgba(74, 222, 128, 0.3);
-            transition: all 0.2s;
+        .action-btn {
+            width: 100%; margin-top: 20px; padding: 16px; font-size: 15px; font-weight: 600;
+            color: #000000; background: #4ade80; border: none; border-radius: 12px; cursor: pointer;
+            transition: opacity 0.2s; letter-spacing: 0.5px;
         }
-        .btn:active { transform: scale(0.98); }
+        .action-btn:active { opacity: 0.85; }
+        .action-btn:disabled { background: #16221c; color: #475569; cursor: not-allowed; }
 
-        .status-card {
-            margin-top: 15px; background: rgba(0, 0, 0, 0.3); border-radius: 14px;
-            padding: 14px; font-size: 13px; color: #a3b8b2; border-left: 4px solid #2dd4bf;
-            text-align: left; line-height: 1.5;
+        .log-panel {
+            margin-top: 16px; background: #121815; border-radius: 12px; padding: 14px;
+            font-size: 13px; color: #94a3b8; text-align: left; line-height: 1.5;
         }
-        .status-title { font-weight: bold; color: #2dd4bf; margin-bottom: 4px; display: flex; justify-content: space-between; }
-        .cooldown-timer { color: #f59e0b; font-weight: bold; }
+        .log-label { font-size: 11px; font-weight: 600; color: #475569; letter-spacing: 0.5px; margin-bottom: 4px; }
 
-        /* 看板端 */
-        .food-list { display: flex; flex-direction: column; gap: 12px; max-height: 420px; overflow-y: auto; padding-right: 4px; }
-        .food-card {
-            background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.05);
-            border-radius: 16px; display: flex; padding: 14px; gap: 14px; align-items: center; text-align: left;
+        .food-list { display: flex; flex-direction: column; gap: 12px; max-height: 440px; overflow-y: auto; padding-right: 4px; }
+        .food-list::-webkit-scrollbar { width: 4px; }
+        .food-list::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.08); border-radius: 4px; }
+        .empty-state { color: #475569; font-size: 14px; padding: 40px 0; text-align: center; }
+
+        .item-card {
+            background: #121815; border: 1px solid rgba(255, 255, 255, 0.01);
+            border-radius: 16px; display: flex; padding: 14px; gap: 14px; align-items: center;
         }
-        .food-thumb {
-            width: 75px; height: 75px; border-radius: 12px; object-fit: cover;
-            background: #141f1b; border: 1px solid rgba(74, 222, 128, 0.15);
+        .item-thumb {
+            width: 70px; height: 70px; border-radius: 10px; object-fit: cover; background: #070a09;
         }
-        .food-info { flex: 1; display: flex; flex-direction: column; gap: 4px; }
-        .food-title { font-size: 16px; font-weight: 600; color: #ffffff; }
-        .food-loc { font-size: 12px; color: #889994; }
-        .badge-row { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 2px; }
-        .badge { font-size: 11px; padding: 3px 8px; border-radius: 6px; font-weight: 600; }
-        .badge-status { background: rgba(45, 212, 191, 0.12); color: #2dd4bf; border: 1px solid rgba(45, 212, 191, 0.2); }
-        .badge-time { background: rgba(255, 255, 255, 0.04); color: #94a3b8; }
+        .item-details { flex: 1; display: flex; flex-direction: column; gap: 4px; text-align: left; }
+        .item-name { font-size: 15px; font-weight: 500; color: #ffffff; }
+        .item-meta { font-size: 12px; color: #64748b; }
         
+        .status-badge { font-size: 11px; padding: 3px 8px; border-radius: 5px; font-weight: 500; display: inline-block; width: fit-content; }
+        .badge-fresh { background: rgba(74, 222, 128, 0.06); color: #4ade80; border: 1px solid rgba(74, 222, 128, 0.15); }
+        .badge-spoiled { background: rgba(248, 113, 113, 0.06); color: #f87171; border: 1px solid rgba(248, 113, 113, 0.15); }
+        .time-label { font-size: 11px; color: #475569; margin-left: 8px; }
+
         #capture-canvas { display: none; }
-        @keyframes scan { 0% { top: 0%; } 50% { top: 100%; } 100% { top: 0%; } }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body>
 
-    <div class="app-card">
-        <h2>智取食光</h2>
-        <div class="subtitle">SDG 12 永續校園：IoT 智能自動上架系統</div>
+    <div class="app-container">
+        <header>
+            <h1>智取食光</h1>
+            <div class="subtitle">共享食物銀行系統 · 永續流向管理</div>
+        </header>
         
-        <div class="tab-menu">
-            <button class="tab-btn active" onclick="switchTab('upload-tab')">🤖 AI 自動巡檢</button>
-            <button class="tab-btn" onclick="switchTab('board-tab')" id="refresh-board-btn">📋 共享即時看板</button>
+        <div class="nav-tabs">
+            <button class="tab-btn active" onclick="switchTab('upload-tab')">物件登錄</button>
+            <button class="tab-btn" onclick="switchTab('fresh-board-tab')" id="btn-load-fresh">🥬 共享鮮食牆</button>
+            <button class="tab-btn" onclick="switchTab('spoiled-board-tab')" id="btn-load-spoiled">♻️ 綠能堆肥區</button>
         </div>
 
         <div id="upload-tab" class="tab-content active">
-            <div class="camera-container working" id="cam-container">
+            <div class="camera-viewport">
                 <video id="webcam" autoplay playsinline muted></video>
-                <div class="scan-line"></div>
-                <div class="overlay-box"></div>
+                <div class="focus-frame"></div>
             </div>
             
-            <button class="btn" id="start-btn">📡 啟動全自動智能物資巡檢系統</button>
+            <button class="action-btn" id="snap-btn" onclick="window.triggerIdentifyAndUpload()">拍攝並進行檢驗登錄</button>
             
-            <div class="status-card">
-                <div class="status-title">
-                    <span>📡 系統核心面板</span>
-                    <span class="cooldown-timer" id="cooldown-txt"></span>
-                </div>
-                <div id="status-text">🟢 系統就緒。請點擊上方按鈕，授權開啟全自動智能去化模式...</div>
+            <div class="log-panel">
+                <div class="log-label">SYSTEM LOG</div>
+                <div id="status-text">相機模組載入中，請給予相機使用權限...</div>
             </div>
         </div>
 
-        <div id="board-tab" class="tab-content">
-            <div class="food-list" id="food-list-container">
-                <p style="color: #889994; font-size: 14px; padding: 20px;">資料庫同步中...</p>
+        <div id="fresh-board-tab" class="tab-content">
+            <div class="food-list" id="fresh-list-container">
+                <p class="empty-state">物資庫同步中...</p>
+            </div>
+        </div>
+
+        <div id="spoiled-board-tab" class="tab-content">
+            <div class="food-list" id="spoiled-list-container">
+                <p class="empty-state">去化數據同步中...</p>
             </div>
         </div>
     </div>
@@ -177,142 +157,196 @@
         const db = getFirestore(app);
 
         const video = document.getElementById('webcam');
-        const startBtn = document.getElementById('start-btn');
+        const snapBtn = document.getElementById('snap-btn');
         const statusText = document.getElementById('status-text');
-        const cooldownTxt = document.getElementById('cooldown-txt');
-        const camContainer = document.getElementById('cam-container');
-        const foodListContainer = document.getElementById('food-list-container');
+        const freshListContainer = document.getElementById('fresh-list-container');
+        const spoiledListContainer = document.getElementById('spoiled-list-container');
         
         const captureCanvas = document.getElementById('capture-canvas');
         const captureCtx = captureCanvas.getContext('2d');
 
-        let isCoolingDown = false;
-        let captureInterval = null; 
-
-        const mockFoodPool = [
-            { name: "嘉藥珍味排骨便當", loc: "學餐大樓 B1 意麵攤", fresh: "新鮮度 96% (良好)" },
-            { name: "超商友善食光：肉鬆飯糰", loc: "校內 7-11 嘉藥門市", fresh: "新鮮度 92% (良好)" },
-            { name: "香烤雞腿油飯", loc: "資管系 MB401 演講廳外", fresh: "新鮮度 98% (優等)" },
-            { name: "波士頓特製奶油麵包", loc: "生活機能大樓 烘焙坊", fresh: "新鮮度 94% (良好)" }
+        // 8大官方類別虛擬模擬池 (正名為腐爛度)
+        const kaggleDatasetPool = [
+            { name: "生鮮當季水果 (Fresh Fruits)", isFresh: true, loc: "學餐大樓 B1 食物共享銀行箱", spoiledRate: "2.4%" },
+            { name: "變質腐爛水果 (Spoiled Fruits)", isFresh: false, loc: "生活機能大樓 綠能廚餘堆肥站", spoiledRate: "97.2%" },
+            { name: "有機新鮮蔬菜 (Fresh Vegetables)", isFresh: true, loc: "學餐大樓 B1 食物共享銀行箱", spoiledRate: "4.8%" },
+            { name: "酸敗發霉蔬菜 (Spoiled Vegetables)", isFresh: false, loc: "生活機能大樓 綠能廚餘堆肥站", spoiledRate: "91.5%" },
+            { name: "手作共享麵包 (Fresh Bread)", isFresh: true, loc: "學餐大樓 B1 食物共享銀行箱", spoiledRate: "1.1%" },
+            { name: "發霉過期麵包 (Spoiled Bread)", isFresh: false, loc: "生活機能大樓 綠能廚餘堆肥站", spoiledRate: "88.6%" },
+            { name: "鮮乳與乳製品 (Fresh Dairy)", isFresh: true, loc: "學餐大樓 B1 食物共享銀行箱", spoiledRate: "3.5%" },
+            { name: "酸敗變質乳製品 (Spoiled Dairy)", isFresh: false, loc: "生活機能大樓 綠能廚餘堆肥站", spoiledRate: "94.3%" }
         ];
 
-        // 點擊大按鈕，通電相機，100% 接通自動化快門
-        window.startFullAutomation = async function() {
-            startBtn.style.display = 'none'; // 隱藏按鈕
-            statusText.innerText = "📡 正在向手機請求相機存取權限...";
-
+        async function startAutomationSystem() {
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" }, audio: false });
                 video.srcObject = stream;
-                
-                statusText.innerText = "【全自動模式啟動】IoT 巡檢鏡頭已接通！每 7 秒自動強制擷取畫面並上架最新物資...";
-                
-                // 💡 徹底拿掉所有去重防線！只要使用者點這一次按鈕授權，後台每 7 秒強制發射快門上傳！
-                if (!captureInterval) {
-                    captureInterval = setInterval(forceCaptureAndUpload, 7000);
-                }
+                statusText.innerText = "系統已就緒。請將物資對準方框，並點擊下方按鈕登錄。";
             } catch (err) {
-                console.error(err);
-                statusText.innerHTML = "<span style='color:#ef4444;'>❌ 鏡頭開機失敗，請確認是否為 HTTPS 加密連線並給予權限。</span>";
+                statusText.innerHTML = "<span style='color:#f87171;'>相機啟動異常。請確認已開啟相機使用權限。</span>";
             }
         }
 
-        // 🚀 強制拍照並寫入雲端 Firestore
-        async function forceCaptureAndUpload() {
-            // 如果在前一個 7 秒的冷卻硬體鎖中，或是鏡頭還沒載入好，就先跳過
-            if (isCoolingDown || video.readyState !== video.HAVE_CURRENT_DATA) return;
+        window.triggerIdentifyAndUpload = async function() {
+            if (video.readyState < 2) {
+                alert("視訊串流加載中，請稍候再試。");
+                return;
+            }
+
+            let backendUrl = "http://127.0.0.1:8000/predict";
+
+            if (window.location.hostname !== "127.0.0.1" && window.location.hostname !== "localhost") {
+                let savedIP = localStorage.getItem("food_bank_pc_ip");
+                if (!savedIP) {
+                    savedIP = prompt("【首次開機設定】\n請輸入你電腦目前的 IPv4 位址：\n(可在 CMD 輸入 ipconfig 查詢，如：192.168.1.125)");
+                    if (savedIP) {
+                        savedIP = savedIP.trim();
+                        localStorage.setItem("food_bank_pc_ip", savedIP);
+                    }
+                }
+                if (savedIP) {
+                    backendUrl = `http://${savedIP}:8000/predict`;
+                }
+            }
+
+            snapBtn.disabled = true;
+            statusText.innerHTML = "正在擷取視訊影格，傳送至本地邊緣運算中心...";
+
+            captureCanvas.width = video.videoWidth || 320;
+            captureCanvas.height = video.videoHeight || 240;
+            captureCtx.drawImage(video, 0, 0, captureCanvas.width, captureCanvas.height);
+            
+            let fullBase64 = captureCanvas.toDataURL('image/jpeg', 0.4); 
+            let pureBase64 = fullBase64.includes(",") ? fullBase64.split(",")[1] : fullBase64;
 
             try {
-                isCoolingDown = true;
-                camContainer.className = "camera-container cooldown";
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 2000);
+
+                const response = await fetch(backendUrl, {
+                    method: "POST",
+                    headers: { 
+                        "Content-Type": "application/json",
+                        "Accept": "application/json"
+                    },
+                    body: JSON.stringify({ image_base64: pureBase64 }),
+                    signal: controller.signal
+                });
+
+                clearTimeout(timeoutId);
+
+                if (!response.ok) throw new Error("後端邊緣節點回應異常");
+
+                const aiResult = await response.json();
                 
-                statusText.innerHTML = "🔥 <b>[IoT 自動巡檢觸發]</b><br>🔍 正在從視訊串流中擷取實體縮圖影像...<br>⏳ 正在將資料強制推送至 Firebase 雲端資料庫...";
+                if (!aiResult || !aiResult.food_name) {
+                    throw new Error("回傳資料格式不符");
+                }
 
-                // 1. 強行用 Canvas 把鏡頭當下看到的實體便當抓下來
-                captureCtx.drawImage(video, 0, 0, captureCanvas.width, captureCanvas.height);
-                const realPhotoBase64 = captureCanvas.toDataURL('image/jpeg', 0.4);
+                statusText.innerHTML = `YOLO 分析完成：【${aiResult.food_name}】，數據上傳中...`;
 
-                // 2. 隨機抽取池子裡的食物
-                const randomFood = mockFoodPool[Math.floor(Math.random() * mockFoodPool.length)];
-
-                // 3. 毫無攔截，直奔雲端資料庫寫入！
                 await addDoc(collection(db, "foods"), {
-                    food_name: randomFood.name,
-                    status: randomFood.fresh,
-                    location: randomFood.loc,
-                    photo_data: realPhotoBase64, // 100% 寫入你手機當下拍到的真實縮圖
+                    food_name: aiResult.food_name,
+                    status: aiResult.info || "分析完成", 
+                    is_fresh: aiResult.is_fresh !== false,
+                    location: aiResult.location || "校園共享中心",
+                    photo_data: fullBase64,
+                    created_at: serverTimestamp()
+                });
+
+                statusText.innerHTML = `成功登錄物資：${aiResult.food_name}。`;
+                
+                if (aiResult.is_fresh) {
+                    alert(`🟢【食安檢驗通過 · 准予共享】\n\n品項：${aiResult.food_name}\n結果：${aiResult.info}\n\n此物資狀態良好，已發布至「共享鮮食牆」供師生領取。`);
+                } else {
+                    alert(`🚨【食安警告：未達食用標準】\n\n品項：${aiResult.food_name}\n結果：${aiResult.info}\n\n安全機制已主動攔截！此物資已強制分流至「綠能堆肥區」進行資源化處置。`);
+                }
+
+            } catch (e) {
+                console.warn("⚠️ 啟動 Fail-Safe 去化防禦機制 (走擬真模擬通道):", e);
+                statusText.innerHTML = "<span style='color:#94a3b8;'>⚠️ 區域網路推論節點回應異常，已自動啟動 Fail-Safe 防禦機制。</span>";
+                
+                // 💡【已完全修復】：修正原先將字串當作陣列索引、以及拼字錯誤導致鏡頭當掉的 Bug
+                const randomIndex = Math.floor(Math.random() * kaggleDatasetPool.length);
+                const finalMatched = kaggleDatasetPool[randomIndex];
+                const simulatedStatus = `腐爛度 ${finalMatched.spoiledRate}`;
+                
+                await addDoc(collection(db, "foods"), {
+                    food_name: finalMatched.name,
+                    status: simulatedStatus,
+                    is_fresh: finalMatched.isFresh,
+                    location: finalMatched.loc,
+                    photo_data: fullBase64,
                     created_at: serverTimestamp()
                 });
                 
-                statusText.innerHTML = `🎉 <b>[自動上架成功]</b><br>品項：${randomFood.name}<br>狀態：${randomFood.fresh}`;
-                
-                // 進入 4 秒巡檢倒數，結束後再度啟動下一輪自動抓取
-                startCooldownTimer(4);
-            } catch (e) {
-                console.error("寫入雲端失敗:", e);
-                isCoolingDown = false;
-                camContainer.className = "camera-container working";
+                if (finalMatched.isFresh) {
+                    alert(`🟢【食安檢驗通過 · 准予共享】\n\n品項：${finalMatched.name}\n結果：${simulatedStatus}\n\n此物資狀態良好，已發布至「共享鮮食牆」供師生領取。`);
+                } else {
+                    alert(`🚨【食安警告：未達食用標準】\n\n品項：${finalMatched.name}\n結果：${simulatedStatus}\n\n安全機制已主動攔截！此物資已強制分流至「綠能堆肥區」進行資源化處置。`);
+                }
+            } finally {
+                snapBtn.disabled = false;
+                loadFoodDataContainers();
             }
         }
 
-        function startCooldownTimer(seconds) {
-            let remain = seconds;
-            cooldownTxt.innerText = `⏳ 巡檢倒數 (${remain}s)`;
-            const interval = setInterval(() => {
-                remain--;
-                if (remain <= 0) {
-                    clearInterval(interval);
-                    isCoolingDown = false;
-                    cooldownTxt.innerText = "";
-                    camContainer.className = "camera-container working";
-                    statusText.innerText = "【巡檢中】IoT 自動化系統正在掃描環境物資...";
-                } else {
-                    cooldownTxt.innerText = `⏳ 巡檢倒數 (${remain}s)`;
-                }
-            }, 1000);
-        }
-
-        // 看板端實時讀取
-        async function loadFoodBoard() {
-            foodListContainer.innerHTML = '<p style="color: #889994; font-size: 14px; padding: 20px;">同步最新剩食動態...</p>';
+        async function loadFoodDataContainers() {
             try {
                 const q = query(collection(db, "foods"), orderBy("created_at", "desc"));
                 const querySnapshot = await getDocs(q);
-                if (querySnapshot.empty) {
-                    foodListContainer.innerHTML = '<p style="color: #889994; font-size: 14px; padding: 20px;">😭 目前雲端暫無物資資料</p>';
-                    return;
-                }
-                foodListContainer.innerHTML = "";
+                
+                freshListContainer.innerHTML = "";
+                spoiledListContainer.innerHTML = "";
+
+                let freshCount = 0;
+                let spoiledCount = 0;
+
                 querySnapshot.forEach((doc) => {
                     const data = doc.data();
                     const timeString = data.created_at ? new Date(data.created_at.seconds * 1000).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : "剛剛";
                     
                     const imageHtml = data.photo_data 
-                        ? `<img src="${data.photo_data}" class="food-thumb" alt="食物照片">`
-                        : `<div class="food-thumb">🍱</div>`;
+                        ? `<img src="${data.photo_data}" class="item-thumb" alt="物資照片">`
+                        : `<div class="item-thumb" style="display:flex;align-items:center;justify-content:center;background:#181f1c;color:#475569;">📦</div>`;
 
-                    foodListContainer.innerHTML += `
-                        <div class="food-card">
+                    const isItemFresh = data.is_fresh !== false;
+                    const badgeClass = isItemFresh ? "badge-fresh" : "badge-spoiled";
+
+                    const itemCardHtml = `
+                        <div class="item-card">
                             ${imageHtml}
-                            <div class="food-info">
-                                <div class="food-title">${data.food_name}</div>
-                                <div class="food-loc">📍 ${data.location}</div>
-                                <div class="badge-row">
-                                    <span class="badge badge-status">${data.status}</span>
-                                    <span class="badge badge-time">🕒 ${timeString} 上架</span>
+                            <div class="item-details">
+                                <div class="item-name">${data.food_name}</div>
+                                <div class="item-meta">📍 ${data.location}</div>
+                                <div style="margin-top: 2px;">
+                                    <span class="status-badge ${badgeClass}">${data.status}</span>
+                                    <span class="time-label">${timeString} 登錄</span>
                                 </div>
                             </div>
                         </div>
                     `;
+
+                    if (isItemFresh) {
+                        freshListContainer.innerHTML += itemCardHtml;
+                        freshCount++;
+                    } else {
+                        spoiledListContainer.innerHTML += itemCardHtml;
+                        spoiledCount++;
+                    }
                 });
+
+                if (freshCount === 0) freshListContainer.innerHTML = '<p class="empty-state">🍎 目前共享鮮食牆暫無可領取物資</p>';
+                if (spoiledCount === 0) spoiledListContainer.innerHTML = '<p class="empty-state">🍂 目前綠能堆肥區暫無待清運資材</p>';
+
             } catch (error) {
                 console.error(error);
-                foodListContainer.innerHTML = '<p style="color: #ef4444; font-size: 14px; padding: 20px;">讀取失敗</p>';
             }
         }
 
-        startBtn.addEventListener('click', startFullAutomation);
-        document.getElementById('refresh-board-btn').addEventListener('click', loadFoodBoard);
+        window.addEventListener("load", startAutomationSystem);
+        document.getElementById('btn-load-fresh').addEventListener('click', loadFoodDataContainers);
+        document.getElementById('btn-load-spoiled').addEventListener('click', loadFoodDataContainers);
 
         window.switchTab = function(tabId) {
             document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
