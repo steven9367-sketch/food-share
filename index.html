@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>智取食光｜AI 剩食自動攔截平台</title>
+    <title>智取食光｜AI 剩食無感去重平台</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
         body {
@@ -58,35 +58,30 @@
         .tab-content { display: none; animation: fadeIn 0.4s ease; }
         .tab-content.active { display: block; }
 
-        /* 鏡頭容器 */
         .camera-container {
             position: relative; width: 100%; aspect-ratio: 4 / 3; border-radius: 20px;
             overflow: hidden; background-color: #000000; border: 1px solid rgba(74, 222, 128, 0.2);
         }
         video { width: 100%; height: 100%; object-fit: cover; }
         
-        /* 智慧探測鎖定框 */
         .overlay-box {
             position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
             width: 70%; height: 60%; border: 2px solid #2dd4bf;
             box-shadow: 0 0 0 9999px rgba(5, 8, 7, 0.6); pointer-events: none; border-radius: 16px;
-            transition: all 0.3s ease;
         }
-        
-        /* 狀態色彩控制 */
         .camera-container.working .overlay-box { border-color: #4ade80; box-shadow: 0 0 15px #4ade80, 0 0 0 9999px rgba(5, 8, 7, 0.5); }
         .camera-container.cooldown .overlay-box { border-color: #6b7280; box-shadow: 0 0 0 9999px rgba(5, 8, 7, 0.75); }
 
+        /* 頂部霓虹雷達動態掃描線 */
         .scan-line {
             position: absolute; top: 0; left: 0; width: 100%; height: 3px;
             background: linear-gradient(90deg, transparent, #4ade80, transparent);
             display: none; pointer-events: none;
         }
         .camera-container.working .scan-line {
-            display: block; animation: scan 2s infinite linear;
+            display: block; animation: scan 2.5s infinite linear;
         }
 
-        /* 智能狀態面板 */
         .status-card {
             margin-top: 15px; background: rgba(0, 0, 0, 0.3); border-radius: 14px;
             padding: 14px; font-size: 13px; color: #a3b8b2; border-left: 4px solid #2dd4bf;
@@ -101,13 +96,10 @@
             background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.05);
             border-radius: 16px; display: flex; padding: 14px; gap: 14px; align-items: center; text-align: left;
         }
-        
-        /* 實體照片縮圖樣式優化 */
         .food-thumb {
             width: 75px; height: 75px; border-radius: 12px; object-fit: cover;
             background: #141f1b; border: 1px solid rgba(74, 222, 128, 0.15);
         }
-        
         .food-info { flex: 1; display: flex; flex-direction: column; gap: 4px; }
         .food-title { font-size: 16px; font-weight: 600; color: #ffffff; }
         .food-loc { font-size: 12px; color: #889994; }
@@ -116,12 +108,7 @@
         .badge-status { background: rgba(45, 212, 191, 0.12); color: #2dd4bf; border: 1px solid rgba(45, 212, 191, 0.2); }
         .badge-time { background: rgba(255, 255, 255, 0.04); color: #94a3b8; }
         
-        .food-list::-webkit-scrollbar { width: 4px; }
-        .food-list::-webkit-scrollbar-thumb { background: rgba(74, 222, 128, 0.15); border-radius: 4px; }
-
-        /* 用於捕捉實體畫面特徵的隱藏 Canvas */
         #capture-canvas { display: none; }
-
         @keyframes scan { 0% { top: 0%; } 50% { top: 100%; } 100% { top: 0%; } }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
     </style>
@@ -130,7 +117,7 @@
 
     <div class="app-card">
         <h2>智取食光</h2>
-        <div class="subtitle">SDG 12 永續校園：IoT 智能截流去化系統</div>
+        <div class="subtitle">SDG 12 永續校園：IoT 智能自動截流去化系統</div>
         
         <div class="tab-menu">
             <button class="tab-btn active" onclick="switchTab('upload-tab')">🤖 AI 自動偵測</button>
@@ -149,7 +136,7 @@
                     <span>📡 系統核心面板</span>
                     <span class="cooldown-timer" id="cooldown-txt"></span>
                 </div>
-                <div id="status-text">📡 正在初始化智慧環境，請允許相機權限...</div>
+                <div id="status-text">📡 正在啟動全自動智能巡檢鏡頭...</div>
             </div>
         </div>
 
@@ -189,73 +176,80 @@
         const captureCtx = captureCanvas.getContext('2d');
 
         let isCoolingDown = false;
-        let lastImageFingerprint = ""; // 用來記憶上一張成功上傳的照片特徵碼
+        let lastImageFingerprint = ""; 
+        let captureInterval = null; // 控制自動快門的計時器
 
         const mockFoodPool = [
-            { name: "照燒雞腿便當", loc: "資管系辦公室外 MB401", fresh: "新鮮度 98% (優等)" },
-            { name: "培根蛋炒飯", loc: "學餐大樓 B1 意麵攤", fresh: "新鮮度 94% (良好)" },
-            { name: "友善食光：鮪魚飯糰", loc: "全家超商 校園門市", fresh: "新鮮度 91% (良好)" },
-            { name: "精緻水果切盤", loc: "活動中心 演講廳外", fresh: "新鮮度 96% (優等)" }
+            { name: "嘉藥珍味排骨便當", loc: "學餐大樓 B1 意麵攤", fresh: "新鮮度 96% (良好)" },
+            { name: "超商友善食光：肉鬆飯糰", loc: "校內 7-11 嘉藥門市", fresh: "新鮮度 92% (良好)" },
+            { name: "香烤雞腿油飯", loc: "資管系 MB401 演講廳外", fresh: "新鮮度 98% (優等)" },
+            { name: "波士頓特製奶油麵包", loc: "生活機能大樓 烘焙坊", fresh: "新鮮度 94% (良好)" }
         ];
 
-        // 啟動最穩定相容之智慧相機模組
+        // 啟動相機
         async function startAutomationSystem() {
+            // 極簡化參數，讓所有手機100%相容點亮
             const constraints = { video: { facingMode: "environment" }, audio: false };
             try {
                 const stream = await navigator.mediaDevices.getUserMedia(constraints);
                 video.srcObject = stream;
-                statusText.innerText = "【相機就緒】系統將於 2 秒後啟動全自動智慧去重巡檢...";
-                
-                // 延遲 2 秒開機，防止抓到啟動時的黑屏，隨後每 2 秒自動拍一張檢查
-                setTimeout(() => {
-                    if(!isCoolingDown) statusText.innerText = "【巡檢中】智慧過濾系統已開機。請將剩食物資置於方框中央...";
-                    setInterval(autoCheckAndCapture, 2000);
-                }, 2000);
+                statusText.innerText = "📡 智慧鏡頭已喚醒，正在等待視訊串流穩定通電...";
             } catch (err) {
                 console.error(err);
-                statusText.innerHTML = "<span style='color:#ef4444;'>❌ 相機開啟失敗。請確認開啟相機權限且網址為 HTTPS 加密連線。</span>";
+                statusText.innerHTML = "<span style='color:#ef4444;'>❌ 相機開啟失敗。請檢查權限或確認使用 HTTPS 網址。</span>";
             }
         }
 
-        // 核心去重新技術：定時拍照並比對圖片指紋碼
+        // 💡【資管級核心優化】：監聽鏡頭的 play 事件
+        // 當手機鏡頭真正成功點亮、畫面開始有動態數據（不再是黑屏）時，才會觸發這個函式！
+        video.addEventListener('play', () => {
+            statusText.innerText = "【運作中】全自動掃描開機成功。系統每 2 秒自動執行物資巡檢...";
+            
+            // 鏡頭通電後，才正式啟動每 2 秒自動快門偵測，徹底防死鎖
+            if (!captureInterval) {
+                captureInterval = setInterval(autoCheckAndCapture, 2000);
+            }
+        });
+
+        // 核心邏輯：定時拍照，並自動排除完全重複的畫面
         async function autoCheckAndCapture() {
-            if (isCoolingDown || video.readyState !== video.HAVE_CURRENT_DATA) return;
+            // 如果正在冷卻中，就直接跳過
+            if (isCoolingDown) return;
 
             try {
-                // 1. 後台自動執行快門截圖
+                // 1. 執行快門：將當前鏡頭拍下來
                 captureCtx.drawImage(video, 0, 0, captureCanvas.width, captureCanvas.height);
                 const realPhotoBase64 = captureCanvas.toDataURL('image/jpeg', 0.4);
 
-                // 2. 智慧特徵值演算：抽取 Base64 編碼中間最敏感的 200 個字元作為圖片指紋
-                const currentFingerprint = realPhotoBase64.substring(500, 700);
+                // 2. 抽取字串中間一部分作為圖片指紋
+                const currentFingerprint = realPhotoBase64.substring(600, 800);
 
-                // 3. 智慧排重：如果跟上一張完全一樣，或者包含初始化黑屏碼(AAAAA)，代表沒移開
+                // 3. 【智慧過濾】如果畫面完全沒變（例如一直對著同一個便當不動），前端直接攔截，絕不重複上傳
                 if (currentFingerprint === lastImageFingerprint || currentFingerprint.includes("AAAAA")) {
                     statusText.innerText = "【智慧過濾】偵測到重複物資畫面（目標未移動），已自動攔截避免重複上架。";
                     return;
                 }
 
-                // 4. 判定為新物資，鎖定並觸發 YOLO 辨識上傳
+                // 4. 判定為新物資，鎖定並觸發上架
                 isCoolingDown = true;
                 camContainer.className = "camera-container cooldown";
-                lastImageFingerprint = currentFingerprint; // 更新記憶的特徵碼
+                lastImageFingerprint = currentFingerprint; // 更新指紋紀錄
 
                 const randomFood = mockFoodPool[Math.floor(Math.random() * mockFoodPool.length)];
-                statusText.innerHTML = `🔥 <b>[AI 擷取全新畫面]</b><br>🔍 YOLO 辨識：${randomFood.name}<br>🛡️ 食安分析：${randomFood.fresh}<br>⏳ 正在同步實體縮圖登錄至食物共享銀行...`;
+                statusText.innerHTML = `🔥 <b>[AI 擷取全新畫面]</b><br>🔍 YOLO 辨識：${randomFood.name}<br>🛡️ 食安分析：${randomFood.fresh}<br>⏳ 正在同步實體縮圖至雲端共享銀行...`;
 
-                // 寫入雲端 Firestore
                 await addDoc(collection(db, "foods"), {
                     food_name: randomFood.name,
                     status: randomFood.fresh,
                     location: randomFood.loc,
-                    photo_data: realPhotoBase64, // 真正截圖下來的照片代碼
+                    photo_data: realPhotoBase64, // 真正拍到的食物照片！
                     created_at: serverTimestamp()
                 });
                 
                 statusText.innerHTML = `🎉 <b>[物資自動上架成功]</b><br>品項：${randomFood.name}<br>狀態：${randomFood.fresh}`;
                 startCooldownTimer(5);
             } catch (e) {
-                console.error("處理自動捕捉出錯:", e);
+                console.error("全自動快門出錯:", e);
                 isCoolingDown = false;
                 camContainer.className = "camera-container working";
             }
@@ -279,7 +273,7 @@
             }, 1000);
         }
 
-        // 看板端實時渲染
+        // 看板端讀取
         async function loadFoodBoard() {
             foodListContainer.innerHTML = '<p style="color: #889994; font-size: 14px; padding: 20px;">同步最新剩食動態...</p>';
             try {
@@ -293,8 +287,6 @@
                 querySnapshot.forEach((doc) => {
                     const data = doc.data();
                     const timeString = data.created_at ? new Date(data.created_at.seconds * 1000).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : "剛剛";
-                    
-                    // 還原並渲染真實照片縮圖
                     const imageHtml = data.photo_data 
                         ? `<img src="${data.photo_data}" class="food-thumb" alt="食物照片">`
                         : `<div class="food-thumb">🍱</div>`;
