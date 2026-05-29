@@ -1,310 +1,736 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>共享食物銀行</title>
-    <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-        body {
-            background: #0b0f0d;
-            color: #f1f5f3;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            min-height: 100vh;
-            padding: 24px 16px;
-        }
-
-        .app-container {
-            width: 100%;
-            max-width: 460px;
-            background: rgba(255, 255, 255, 0.01);
-            border: 1px solid rgba(255, 255, 255, 0.06);
-            border-radius: 28px;
-            padding: 24px;
-            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
-        }
-
-        header { text-align: left; margin-bottom: 24px; }
-        h1 { font-size: 24px; font-weight: 600; color: #ffffff; letter-spacing: -0.5px; }
-        .subtitle { font-size: 13px; color: #64748b; margin-top: 2px; }
-
-        .nav-tabs {
-            display: flex; background: #121815; padding: 4px; border-radius: 14px; margin-bottom: 24px;
-            border: 1px solid rgba(255, 255, 255, 0.02);
-        }
-        .tab-btn {
-            flex: 1; padding: 12px 6px; font-size: 13px; background: none; border: none; color: #64748b;
-            cursor: pointer; font-weight: 500; border-radius: 10px; transition: all 0.2s ease;
-            white-space: nowrap;
-        }
-        .tab-btn.active {
-            background: #1c2621; color: #4ade80; font-weight: 600;
-        }
-
-        .tab-content { display: none; }
-        .tab-content.active { display: block; animation: slideUp 0.3s ease-out; }
-
-        .camera-viewport {
-            position: relative; width: 100%; aspect-ratio: 4 / 3; border-radius: 18px;
-            overflow: hidden; background: #000000; border: 1px solid rgba(255, 255, 255, 0.08);
-        }
-        video { width: 100%; height: 100%; object-fit: cover; }
-        .focus-frame {
-            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            width: 75%; height: 65%; border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 14px; pointer-events: none;
-        }
-
-        .action-btn {
-            width: 100%; margin-top: 20px; padding: 16px; font-size: 15px; font-weight: 600;
-            color: #000000; background: #4ade80; border: none; border-radius: 12px; cursor: pointer;
-            transition: opacity 0.2s; letter-spacing: 0.5px;
-        }
-        .action-btn:active { opacity: 0.85; }
-        .action-btn:disabled { background: #16221c; color: #475569; cursor: not-allowed; }
-
-        .log-panel {
-            margin-top: 16px; background: #121815; border-radius: 12px; padding: 14px;
-            font-size: 13px; color: #94a3b8; text-align: left; line-height: 1.5;
-        }
-        .log-label { font-size: 11px; font-weight: 600; color: #475569; letter-spacing: 0.5px; margin-bottom: 4px; }
-
-        .food-list { display: flex; flex-direction: column; gap: 12px; max-height: 440px; overflow-y: auto; padding-right: 4px; }
-        .food-list::-webkit-scrollbar { width: 4px; }
-        .food-list::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.08); border-radius: 4px; }
-        .empty-state { color: #475569; font-size: 14px; padding: 40px 0; text-align: center; }
-
-        .item-card {
-            background: #121815; border: 1px solid rgba(255, 255, 255, 0.01);
-            border-radius: 16px; display: flex; padding: 14px; gap: 14px; align-items: center;
-        }
-        .item-thumb {
-            width: 70px; height: 70px; border-radius: 10px; object-fit: cover; background: #070a09;
-        }
-        .item-details { flex: 1; display: flex; flex-direction: column; gap: 4px; text-align: left; }
-        .item-name { font-size: 15px; font-weight: 500; color: #ffffff; }
-        .item-meta { font-size: 12px; color: #64748b; }
-        
-        .status-badge { font-size: 11px; padding: 3px 8px; border-radius: 5px; font-weight: 500; display: inline-block; width: fit-content; }
-        .badge-fresh { background: rgba(74, 222, 128, 0.06); color: #4ade80; border: 1px solid rgba(74, 222, 128, 0.15); }
-        .badge-spoiled { background: rgba(248, 113, 113, 0.06); color: #f87171; border: 1px solid rgba(248, 113, 113, 0.15); }
-        .time-label { font-size: 11px; color: #475569; margin-left: 8px; }
-
-        #capture-canvas { display: none; }
-        @keyframes slideUp { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>校園永續食光 | 校園食物浪費網站管理系統</title>
+  <meta name="description" content="校園即期食品、餐廳賸餘便當與廚餘管理系統，整合 YOLO AI 辨識新鮮度，減少食物浪費。">
+  
+  <!-- Styling -->
+  <link rel="stylesheet" href="styles.css">
+  
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 <body>
 
-    <div class="app-container">
-        <header>
-            <h1>共享食物銀行</h1>
-            <div class="subtitle">共享食物銀行系統 · 永續流向管理</div>
-        </header>
+  <div id="app-container">
+    
+    <!-- 1. SIDEBAR NAVIGATION (Desktop) -->
+    <aside id="sidebar">
+      <div class="brand-section">
+        <div class="brand-icon">
+          <i data-lucide="leaf"></i>
+        </div>
+        <span class="brand-name">校園永續食光</span>
+      </div>
+      
+      <nav class="nav-links">
+        <!-- USER NAVIGATION SECTION -->
+        <span class="nav-group-title user-only">一般用戶前台</span>
+        <a href="#" class="nav-link active user-only" data-screen="user-home">
+          <i data-lucide="home"></i> 首頁 Dashboard
+        </a>
+        <a href="#" class="nav-link user-only" data-screen="user-foods">
+          <i data-lucide="search"></i> 搜尋即期食品
+        </a>
+        <a href="#" class="nav-link user-only" data-screen="user-bentos">
+          <i data-lucide="utensils"></i> 餐廳餘裕便當
+        </a>
+
+        <!-- ADMIN NAVIGATION SECTION -->
+        <span class="nav-group-title admin-only">管理員後台</span>
+        <a href="#" class="nav-link admin-only" data-screen="admin-dashboard">
+          <i data-lucide="line-chart"></i> 數據統計儀表板
+        </a>
+        <a href="#" class="nav-link admin-only" data-screen="admin-foods">
+          <i data-lucide="scan-face"></i> 超商即期品管理
+        </a>
+        <a href="#" class="nav-link admin-only" data-screen="admin-bentos">
+          <i data-lucide="store"></i> 餐廳便當上架
+        </a>
+        <a href="#" class="nav-link admin-only" data-screen="admin-waste">
+          <i data-lucide="sprout"></i> 餐廳廚餘紀錄
+        </a>
+      </nav>
+      
+      <div class="sidebar-footer">
+        <div class="user-profile">
+          <div class="user-avatar">
+            <i data-lucide="user"></i>
+          </div>
+          <div class="user-info">
+            <span class="user-name">國立大學</span>
+            <span class="user-role">校園永續組</span>
+          </div>
+        </div>
+        <button class="theme-toggle-btn" title="切換深色/淺色模式" id="theme-toggle-desktop">
+          <i data-lucide="sun"></i>
+        </button>
+      </div>
+    </aside>
+
+    <!-- 2. MAIN CONTENT AREA -->
+    <main>
+      
+      <!-- TOP HEADER BAR -->
+      <header>
+        <div class="header-title-area" style="display: flex; align-items: center; gap: 12px;">
+          <!-- Mobile Menu Hamburger -->
+          <button class="mobile-menu-toggle btn-secondary user-only" style="padding: 8px; display: none;" id="mobile-hamburger">
+            <i data-lucide="menu"></i>
+          </button>
+          <h1 id="page-title">校園食物浪費管理系統</h1>
+        </div>
         
-        <div class="nav-tabs">
-            <button class="tab-btn active" onclick="switchTab('upload-tab')">物件登錄</button>
-            <button class="tab-btn" onclick="switchTab('fresh-board-tab')" id="btn-load-fresh">🥬 共享食庫</button>
-            <button class="tab-btn" onclick="switchTab('spoiled-board-tab')" id="btn-load-spoiled">♻️ 綠能堆肥區</button>
+        <div class="header-actions">
+          <!-- Role switcher (User/Admin) -->
+          <div class="role-switcher">
+            <button class="role-btn active" data-role="user">前台領取</button>
+            <button class="role-btn" data-role="admin">後台管理</button>
+          </div>
+        </div>
+      </header>
+
+      <!-- 3. SCREEN CONTENTS -->
+
+      <!-- ========================================== -->
+      <!-- SCREEN 1: USER HOME (前台首頁) -->
+      <!-- ========================================== -->
+      <section class="screen-content active" id="user-home">
+        <!-- Banner card -->
+        <div style="background: linear-gradient(135deg, rgba(16, 185, 129, 0.25), rgba(59, 130, 246, 0.1)); border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 30px; margin-bottom: 30px; position: relative; overflow: hidden; box-shadow: var(--shadow-sm);">
+          <div style="max-width: 600px; z-index: 2; position: relative;">
+            <h2 style="font-family: var(--font-title); font-size: 1.8rem; font-weight: 800; margin-bottom: 10px; background: linear-gradient(to right, #10b981, #3b82f6); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">珍惜校園物資，邁向零廚餘！</h2>
+            <p style="color: var(--text-secondary); line-height: 1.6; margin-bottom: 20px; font-size: 0.95rem;">
+              本平台為全校師生提供「超商即期食品領取」與「餐廳 unsold 便當預約」服務。管理者亦在此登記廚餘流向，共同打造綠色低碳校園。
+            </p>
+            <div style="display: flex; gap: 12px;">
+              <button class="btn-primary" onclick="document.querySelector('[data-screen=user-foods]').click()"><i data-lucide="search"></i> 搜尋即期品</button>
+              <button class="btn-secondary" onclick="document.querySelector('[data-screen=user-bentos]').click()"><i data-lucide="utensils"></i> 預定餐廳便當</button>
+            </div>
+          </div>
+          <!-- Eco Leaf Icon decorative background -->
+          <i data-lucide="sprout" style="position: absolute; right: 40px; bottom: -20px; width: 200px; height: 200px; color: rgba(16, 185, 129, 0.08); z-index: 1;"></i>
         </div>
 
-        <div id="upload-tab" class="tab-content active">
-            <div class="camera-viewport">
-                <video id="webcam" autoplay playsinline muted></video>
-                <div class="focus-frame"></div>
+        <!-- Dashboard Stat Grid -->
+        <div class="grid-stats">
+          <div class="stat-card">
+            <div class="stat-icon-box green">
+              <i data-lucide="shopping-bag"></i>
+            </div>
+            <div class="stat-info">
+              <span class="stat-label">今日超商即期食品</span>
+              <span class="stat-value" id="home-avail-foods">0</span>
+              <span class="stat-trend up"><i data-lucide="arrow-up-right"></i> 限時珍食</span>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon-box blue">
+              <i data-lucide="box"></i>
+            </div>
+            <div class="stat-info">
+              <span class="stat-label">今日餐廳剩餘便當</span>
+              <span class="stat-value" id="home-avail-bentos">0</span>
+              <span class="stat-trend up"><i data-lucide="check"></i> 供餐中</span>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon-box purple">
+              <i data-lucide="leaf"></i>
+            </div>
+            <div class="stat-info">
+              <span class="stat-label">全校累計減少碳排</span>
+              <span class="stat-value" id="home-carbon-saved">0.0 kg</span>
+              <span class="stat-trend up"><i data-lucide="sparkles"></i> 永續校園</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section: Recent convenience foods -->
+        <div class="section-header">
+          <h2>最新超商珍食推薦</h2>
+          <button class="btn-secondary" onclick="document.querySelector('[data-screen=user-foods]').click()">查看全部 <i data-lucide="arrow-right"></i></button>
+        </div>
+        
+        <div class="cards-container" id="home-recent-foods">
+          <!-- Populated by JS -->
+        </div>
+      </section>
+
+      <!-- ========================================== -->
+      <!-- SCREEN 2: USER FOODS (超商食品搜尋與列表) -->
+      <!-- ========================================== -->
+      <section class="screen-content" id="user-foods">
+        <div class="section-header" style="margin-top: 0;">
+          <h2>校園超商即期珍食</h2>
+        </div>
+
+        <!-- Search & Advanced Filter Panel -->
+        <div class="search-filter-panel">
+          <form class="search-form" id="search-food-form" onsubmit="event.preventDefault();">
+            <div class="form-group">
+              <label for="search-food-name">關鍵字搜尋 (名稱、備註)</label>
+              <div class="input-with-icon">
+                <i data-lucide="search" class="input-icon"></i>
+                <input type="text" id="search-food-name" class="form-control" placeholder="輸入香蕉、三明治、店家等...">
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="search-freshness">新鮮度狀態</label>
+              <select id="search-freshness" class="form-control">
+                <option value="all">顯示全部</option>
+                <option value="fresh">良好/新鮮</option>
+                <option value="warning">即期</option>
+                <option value="expired">過期</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="search-exp-date">最晚過期日期</label>
+              <input type="date" id="search-exp-date" class="form-control">
+            </div>
+            <div class="form-group">
+              <button class="btn-primary" style="width: 100%;" type="button" id="reset-search-btn" onclick="document.getElementById('search-food-form').reset(); document.getElementById('search-food-name').dispatchEvent(new Event('input'));">
+                <i data-lucide="refresh-cw"></i> 重設條件
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <!-- Grid Cards of Foods -->
+        <div class="cards-container" id="user-foods-container">
+          <!-- Populated by JS -->
+        </div>
+      </section>
+
+      <!-- ========================================== -->
+      <!-- SCREEN 3: USER BENTOS (餐廳餘裕便當) -->
+      <!-- ========================================== -->
+      <section class="screen-content" id="user-bentos">
+        <div style="background-color: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 20px; display: flex; align-items: center; gap: 16px; margin-bottom: 25px; box-shadow: var(--shadow-sm);">
+          <div class="stat-icon-box blue" style="flex-shrink: 0; width: 60px; height: 60px; font-size: 1.5rem;">
+            <i data-lucide="info"></i>
+          </div>
+          <div>
+            <h4 style="font-family: var(--font-title); font-size: 1.05rem; font-weight: 700; margin-bottom: 4px;">餐廳餘裕便當預訂說明</h4>
+            <p style="color: var(--text-secondary); font-size: 0.85rem; line-height: 1.5;">
+              每日 13:00 以後及 19:30 以後，學食餐廳會在此發佈當日未售罄之美味餐盒。師生可於線上預訂，並於<b>半小時內</b>前往指定餐廳櫃台付款取餐，逾時將自動釋出額度。
+            </p>
+          </div>
+        </div>
+
+        <div class="section-header">
+          <h2>今日提供便當清單</h2>
+        </div>
+
+        <div class="table-responsive">
+          <table>
+            <thead>
+              <tr>
+                <th>學食餐廳名稱</th>
+                <th>便當種類</th>
+                <th>剩餘數量</th>
+                <th>有效領取時間</th>
+                <th>備註項目</th>
+                <th>狀態與操作</th>
+              </tr>
+            </thead>
+            <tbody id="user-bentos-container">
+              <!-- Populated by JS -->
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ========================================== -->
+      <!-- SCREEN 4: ADMIN DASHBOARD (後台數據儀表板) -->
+      <!-- ========================================== -->
+      <section class="screen-content" id="admin-dashboard">
+        <div class="section-header" style="margin-top: 0;">
+          <h2>校園減廢統計儀表板</h2>
+          <span style="font-size: 0.85rem; color: var(--text-secondary);">更新時間: 即時數據</span>
+        </div>
+
+        <!-- Dashboard Stat Grid -->
+        <div class="grid-stats">
+          <div class="stat-card">
+            <div class="stat-icon-box green">
+              <i data-lucide="scale"></i>
+            </div>
+            <div class="stat-info">
+              <span class="stat-label">本週累計廚餘重量</span>
+              <span class="stat-value">512.4 kg</span>
+              <span class="stat-trend down"><i data-lucide="arrow-down-right"></i> 較上週 -8.3%</span>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon-box blue">
+              <i data-lucide="check-square"></i>
+            </div>
+            <div class="stat-info">
+              <span class="stat-label">即期食品回收率</span>
+              <span class="stat-value">91.8 %</span>
+              <span class="stat-trend up"><i data-lucide="arrow-up-right"></i> 目標達成</span>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon-box purple">
+              <i data-lucide="heart"></i>
+            </div>
+            <div class="stat-info">
+              <span class="stat-label">累計分享可食餐盒</span>
+              <span class="stat-value">1,482 個</span>
+              <span class="stat-trend up"><i data-lucide="arrow-up-right"></i> 減少資源浪費</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Charts Grid Layout -->
+        <div class="grid-charts">
+          <!-- Chart 1: Line Chart (Waste trend) -->
+          <div class="chart-card">
+            <div class="chart-header">
+              <h3>近七日廚餘量變化趨勢 (kg)</h3>
+              <i data-lucide="trending-up" style="color: var(--primary);"></i>
+            </div>
+            <div class="chart-body">
+              <svg class="chart-svg" id="waste-trend-svg"></svg>
+            </div>
+          </div>
+
+          <!-- Chart 2: Pie Chart (Category ratio) -->
+          <div class="chart-card">
+            <div class="chart-header">
+              <h3>廚餘分類佔比</h3>
+              <i data-lucide="pie-chart" style="color: var(--status-warning);"></i>
+            </div>
+            <div class="chart-body" style="flex-direction: column; justify-content: space-between;">
+              <svg class="chart-svg" id="waste-pie-svg" style="width: 160px; height: 160px;"></svg>
+              <div class="chart-legend" style="width: 100%; margin-top: 15px;">
+                <div class="legend-item">
+                  <span class="legend-color" style="background-color: var(--status-fresh);"></span>
+                  <span id="pie-legend-raw">生廚餘 (堆肥)</span>
+                </div>
+                <div class="legend-item">
+                  <span class="legend-color" style="background-color: var(--status-warning);"></span>
+                  <span id="pie-legend-cooked">熟廚餘 (養豬)</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Chart 3: Bar Chart (Recovery rate) -->
+          <div class="chart-card" style="grid-column: span 1;">
+            <div class="chart-header">
+              <h3>超商食品處理狀況統計 (件數)</h3>
+              <i data-lucide="bar-chart-3" style="color: var(--primary);"></i>
+            </div>
+            <div class="chart-body">
+              <svg class="chart-svg" id="recovery-bar-svg"></svg>
+            </div>
+          </div>
+          
+          <!-- Admin Quick Tips -->
+          <div class="chart-card">
+            <div class="chart-header">
+              <h3>校園減廢綠色小常識</h3>
+              <i data-lucide="lightbulb" style="color: var(--status-warning);"></i>
+            </div>
+            <div style="font-size: 0.85rem; line-height: 1.6; color: var(--text-secondary);">
+              <ul style="padding-left: 15px; display: flex; flex-direction: column; gap: 10px;">
+                <li><strong>生廚餘 vs 熟廚餘：</strong>生廚餘主要指未經烹煮的果皮、蔬菜殘渣，適合用作堆肥發酵；熟廚餘則為剩飯剩菜，通常回收供養豬業使用。</li>
+                <li><strong>YOLO 視覺新鮮度辨識：</strong>利用 AI 影像特徵檢測，能即時分析出食物表面是否有褐變、發霉、軟化等衰老特徵，減少人為肉眼誤判，提升分類效率！</li>
+                <li><strong>碳排放估算：</strong>珍惜每一克糧食，全校師生每成功拯救一個便當（避免成為廢棄物），即可減少約 <b>0.5 kg</b> 的二氧化碳排放量！</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ========================================== -->
+      <!-- SCREEN 5: ADMIN FOODS (超商即期食品管理) -->
+      <!-- ========================================== -->
+      <section class="screen-content" id="admin-foods">
+        <div class="section-header" style="margin-top: 0;">
+          <h2>超商即期珍食上架管理</h2>
+          <button class="btn-primary" id="trigger-scan-btn"><i data-lucide="camera"></i> YOLO AI 拍照上架</button>
+        </div>
+
+        <!-- Dashboard-style intro card -->
+        <div style="background-color: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 15px 20px; display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 25px; box-shadow: var(--shadow-sm);">
+          <div style="display: flex; align-items: center; gap: 12px;">
+            <i data-lucide="scan" style="color: var(--primary); width: 28px; height: 28px;"></i>
+            <span style="font-size: 0.9rem; color: var(--text-secondary);">請搭配手機鏡頭或使用上方的「YOLO AI 拍照上架」功能，系統會自動辨識食物新鮮度並帶入保存期限！</span>
+          </div>
+        </div>
+
+        <div class="table-responsive">
+          <table>
+            <thead>
+              <tr>
+                <th>圖片</th>
+                <th>項目名稱</th>
+                <th>保存期限 (日期)</th>
+                <th>新鮮度估計</th>
+                <th>處置狀態</th>
+                <th>備註</th>
+                <th>操作管理</th>
+              </tr>
+            </thead>
+            <tbody id="admin-foods-tbody">
+              <!-- Populated by JS -->
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ========================================== -->
+      <!-- SCREEN 6: ADMIN BENTOS (餐廳便當上架管理) -->
+      <!-- ========================================== -->
+      <section class="screen-content" id="admin-bentos">
+        <div class="grid-charts" style="grid-template-columns: 1fr 2fr; margin-bottom: 0;">
+          
+          <!-- Left: Add bento form -->
+          <div class="chart-card" style="height: fit-content;">
+            <div class="chart-header">
+              <h3>登錄未賣完可食便當</h3>
             </div>
             
-            <button class="action-btn" id="snap-btn" onclick="window.triggerIdentifyAndUpload()">拍攝並進行檢驗登錄</button>
+            <form id="add-bento-form">
+              <div class="form-group" style="margin-bottom: 12px;">
+                <label for="bento-restaurant" class="form-label">餐廳名稱 *</label>
+                <select id="bento-restaurant" class="form-control">
+                  <option value="第一學食 - 永和排骨飯">第一學食 - 永和排骨飯</option>
+                  <option value="第一學食 - 阿婆麵攤">第一學食 - 阿婆麵攤</option>
+                  <option value="第二學食 - 綠色健康輕食">第二學食 - 綠色健康輕食</option>
+                  <option value="第三學食 - 燒臘大師">第三學食 - 燒臘大師</option>
+                </select>
+              </div>
+              <div class="form-group" style="margin-bottom: 12px;">
+                <label for="bento-name" class="form-label">便當種類/名稱 *</label>
+                <input type="text" id="bento-name" class="form-control" placeholder="例：香煎雞腿便當" required>
+              </div>
+              <div class="form-group" style="margin-bottom: 12px;">
+                <label for="bento-quantity" class="form-label">上架數量 (個) *</label>
+                <input type="number" id="bento-quantity" class="form-control" min="1" max="100" value="5" required>
+              </div>
+              <div class="form-group" style="margin-bottom: 12px;">
+                <label for="bento-hours" class="form-label">領取時限 (幾小時內) *</label>
+                <select id="bento-hours" class="form-control">
+                  <option value="2">2 小時內</option>
+                  <option value="3">3 小時內</option>
+                  <option value="4" selected>4 小時內</option>
+                  <option value="6">6 小時內</option>
+                </select>
+              </div>
+              <div class="form-group" style="margin-bottom: 20px;">
+                <label for="bento-remarks" class="form-label">備註/地點說明</label>
+                <textarea id="bento-remarks" class="form-textarea" placeholder="例如：請至二樓輕食櫃台取用，限量供應。"></textarea>
+              </div>
+              
+              <button type="submit" class="btn-primary" style="width: 100%;"><i data-lucide="plus-circle"></i> 確認上架發佈</button>
+            </form>
+          </div>
+
+          <!-- Right: Bentos list table -->
+          <div class="chart-card">
+            <div class="chart-header">
+              <h3>目前上架中便當紀錄</h3>
+            </div>
             
-            <div class="log-panel">
-                <div class="log-label">SYSTEM LOG</div>
-                <div id="status-text">相機模組載入中，請給予相機使用權限...</div>
+            <div class="table-responsive" style="margin-top: 0;">
+              <table>
+                <thead>
+                  <tr>
+                    <th>餐廳</th>
+                    <th>便當名稱</th>
+                    <th>數量</th>
+                    <th>有效截止時間</th>
+                    <th>狀態</th>
+                    <th>備註</th>
+                    <th>管理</th>
+                  </tr>
+                </thead>
+                <tbody id="admin-bentos-tbody">
+                  <!-- Populated by JS -->
+                </tbody>
+              </table>
             </div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- ========================================== -->
+      <!-- SCREEN 7: ADMIN WASTE (餐廳廚餘紀錄管理) -->
+      <!-- ========================================== -->
+      <section class="screen-content" id="admin-waste">
+        <div class="grid-charts" style="grid-template-columns: 1fr 2fr; margin-bottom: 0;">
+          
+          <!-- Left: Log waste form -->
+          <div class="chart-card" style="height: fit-content;">
+            <div class="chart-header">
+              <h3>餐廳每日廚餘量登記</h3>
+            </div>
+            
+            <form id="add-waste-form">
+              <div class="form-group" style="margin-bottom: 12px;">
+                <label for="waste-date" class="form-label">紀錄日期 *</label>
+                <input type="date" id="waste-date" class="form-control" required>
+              </div>
+              <div class="form-group" style="margin-bottom: 12px;">
+                <label for="waste-restaurant" class="form-label">餐廳名稱 *</label>
+                <select id="waste-restaurant" class="form-control">
+                  <option value="第一學食">第一學食</option>
+                  <option value="第二學食">第二學食</option>
+                  <option value="第三學食">第三學食</option>
+                  <option value="全校超商聯合">全校超商聯合</option>
+                </select>
+              </div>
+              <div class="form-group" style="margin-bottom: 12px;">
+                <label for="waste-weight" class="form-label">廚餘重量 (kg) *</label>
+                <input type="number" id="waste-weight" class="form-control" step="0.1" min="0.1" placeholder="例如：28.5" required>
+              </div>
+              <div class="form-group" style="margin-bottom: 12px;">
+                <label for="waste-category" class="form-label">廚餘分類 *</label>
+                <select id="waste-category" class="form-control">
+                  <option value="raw">生廚餘 (菜葉果皮、未烹調)</option>
+                  <option value="cooked" selected>熟廚餘 (賸飯剩菜、已烹調)</option>
+                </select>
+              </div>
+              <div class="form-group" style="margin-bottom: 12px;">
+                <label for="waste-method" class="form-label">處理處置方式 *</label>
+                <select id="waste-method" class="form-control">
+                  <option value="compost">有機堆肥發酵</option>
+                  <option value="pig_feed" selected>畜牧養豬飼料化</option>
+                  <option value="recycle">委外環保公司回收</option>
+                </select>
+              </div>
+              <div class="form-group" style="margin-bottom: 20px;">
+                <label for="waste-reporter" class="form-label">經辦人簽名 *</label>
+                <input type="text" id="waste-reporter" class="form-control" placeholder="請輸入姓名" required>
+              </div>
+              
+              <button type="submit" class="btn-primary" style="width: 100%;"><i data-lucide="check"></i> 提交紀錄登記</button>
+            </form>
+          </div>
+
+          <!-- Right: Waste logs history table -->
+          <div class="chart-card">
+            <div class="chart-header">
+              <h3>歷史廚餘申報日誌</h3>
+            </div>
+            
+            <div class="table-responsive" style="margin-top: 0; max-height: 520px;">
+              <table>
+                <thead>
+                  <tr>
+                    <th>日期</th>
+                    <th>申報單位</th>
+                    <th>重量</th>
+                    <th>分類</th>
+                    <th>處理方式</th>
+                    <th>經辦人</th>
+                  </tr>
+                </thead>
+                <tbody id="admin-waste-tbody">
+                  <!-- Populated by JS -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- 4. MOBILE NAVIGATION TAB BAR (Mobile only) -->
+      <nav class="mobile-nav-bar">
+        <!-- USER MOBILE NAV -->
+        <a href="#" class="mobile-nav-link active user-only" data-screen="user-home">
+          <i data-lucide="home"></i>
+          <span>首頁</span>
+        </a>
+        <a href="#" class="mobile-nav-link user-only" data-screen="user-foods">
+          <i data-lucide="search"></i>
+          <span>搜珍食</span>
+        </a>
+        <a href="#" class="mobile-nav-link user-only" data-screen="user-bentos">
+          <i data-lucide="utensils"></i>
+          <span>搶便當</span>
+        </a>
+        
+        <!-- ADMIN MOBILE NAV -->
+        <a href="#" class="mobile-nav-link admin-only" data-screen="admin-dashboard">
+          <i data-lucide="line-chart"></i>
+          <span>儀表板</span>
+        </a>
+        <a href="#" class="mobile-nav-link admin-only" data-screen="admin-foods">
+          <i data-lucide="scan"></i>
+          <span>即期品</span>
+        </a>
+        <!-- Shared camera launch button in center for Admin -->
+        <a href="#" class="mobile-nav-link scanner-btn admin-only" id="mobile-scanner-fab" onclick="document.getElementById('trigger-scan-btn').click(); return false;">
+          <i data-lucide="camera" style="width:24px; height:24px; stroke-width: 2.5px;"></i>
+        </a>
+        <a href="#" class="mobile-nav-link admin-only" data-screen="admin-bentos">
+          <i data-lucide="store"></i>
+          <span>便當</span>
+        </a>
+        <a href="#" class="mobile-nav-link admin-only" data-screen="admin-waste">
+          <i data-lucide="sprout"></i>
+          <span>廚餘</span>
+        </a>
+      </nav>
+
+      <!-- Floating Action Button for Mobile Camera launch (Admin only, helper) -->
+      <a href="#" class="mobile-fab admin-only" onclick="document.getElementById('trigger-scan-btn').click(); return false;">
+        <i data-lucide="camera"></i>
+      </a>
+
+    </main>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- MODAL: YOLO AI CAMERA SCANNER & CONFIRM FORM -->
+  <!-- ========================================== -->
+  <div class="modal-overlay" id="yolo-scanner-modal">
+    <div class="modal-box yolo-scanner-modal">
+      <div class="modal-header">
+        <h3><i data-lucide="cpu" style="color:var(--primary); vertical-align:middle; margin-right:6px;"></i> YOLO AI 食物檢測與新鮮度識別</h3>
+        <button class="close-modal-btn" id="close-scanner-btn"><i data-lucide="x"></i></button>
+      </div>
+      <div class="modal-body">
+        
+        <!-- 1. Cam & Image Viewer -->
+        <div class="scanner-container">
+          <video id="scanner-video" class="scanner-video-preview" autoplay playsinline></video>
+          <img id="scanner-image" class="scanner-image-preview" alt="上傳圖片預覽">
+          
+          <div class="scanner-placeholder" id="scanner-placeholder">
+            <i data-lucide="camera"></i>
+            <p>請開啟手機相機拍照，或點擊下方示範食物模擬 YOLO AI 視覺辨識</p>
+          </div>
+          
+          <!-- Scan laser light line -->
+          <div class="scanner-scan-line" id="scan-line"></div>
+          
+          <!-- AI bounding box container -->
+          <div class="bbox-container" id="bbox-container"></div>
+          
+          <!-- Console terminal console -->
+          <div class="terminal-overlay" id="terminal-console"></div>
         </div>
 
-        <div id="fresh-board-tab" class="tab-content">
-            <div class="food-list" id="fresh-list-container">
-                <p class="empty-state">物資庫同步中...</p>
-            </div>
+        <!-- 2. Source Actions -->
+        <div class="upload-options-grid">
+          <button class="btn-secondary" id="scanner-camera-btn">
+            <i data-lucide="aperture"></i> 啟動相機鏡頭
+          </button>
+          <button class="btn-secondary" id="scanner-upload-btn">
+            <i data-lucide="upload-cloud"></i> 上傳手機照片
+          </button>
+          <input type="file" id="scanner-file-input" style="display: none;" accept="image/*" capture="environment">
         </div>
 
-        <div id="spoiled-board-tab" class="tab-content">
-            <div class="food-list" id="spoiled-list-container">
-                <p class="empty-state">去化數據同步中...</p>
+        <!-- 3. Preloaded Demos Gallery -->
+        <div class="demo-gallery">
+          <div class="demo-gallery-title">示範快速點選照片 (免上傳/免開相機即可體驗 YOLO)</div>
+          <div class="demo-grid">
+            <div class="demo-item" data-file="fresh_banana.png">
+              <img src="assets/fresh_banana.png" alt="新鮮香蕉">
+              <span class="demo-label">新鮮香蕉</span>
             </div>
+            <div class="demo-item" data-file="spotted_banana.png">
+              <img src="assets/spotted_banana.png" alt="過熟香蕉">
+              <span class="demo-label">即期香蕉</span>
+            </div>
+            <div class="demo-item" data-file="sandwich.png">
+              <img src="assets/sandwich.png" alt="三明治">
+              <span class="demo-label">三明治</span>
+            </div>
+            <div class="demo-item" data-file="bento_box.png">
+              <img src="assets/bento_box.png" alt="學食便當">
+              <span class="demo-label">炸排骨便當</span>
+            </div>
+          </div>
         </div>
+
+        <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 25px 0 20px 0;">
+
+        <!-- 4. Verification Form -->
+        <h4 style="font-family: var(--font-title); margin-bottom: 15px;"><i data-lucide="clipboard-check" style="color:var(--primary); vertical-align:middle; margin-right:6px;"></i> 步驟二：YOLO 識別資料確認與編輯</h4>
+        
+        <div style="display: flex; gap: 20px; flex-wrap: wrap;">
+          <!-- Image preview next to form -->
+          <div style="flex: 1 1 180px; min-height: 150px; background-color: var(--bg-tertiary); border: 1px dashed var(--border-color); border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; overflow: hidden; position: relative;">
+            <span id="form-image-placeholder" style="color: var(--text-muted); font-size: 0.8rem; text-align: center; padding: 10px;">待 YOLO 辨識後<br>自動載入預覽</span>
+            <img id="detected-image-preview" style="width: 100%; height: 100%; object-fit: cover; display: none;" alt="確認圖檔">
+          </div>
+
+          <!-- Verification fields form -->
+          <form id="add-food-form" style="flex: 2 1 300px;">
+            <div class="form-grid">
+              <div class="form-group form-grid-full">
+                <label for="food-name" class="form-label">項目名稱 *</label>
+                <input type="text" id="food-name" class="form-control" placeholder="例：7-11 珍食香蕉" required>
+              </div>
+              <div class="form-group">
+                <label for="food-mfg-date" class="form-label">製造日期 *</label>
+                <input type="date" id="food-mfg-date" class="form-control" required>
+              </div>
+              <div class="form-group">
+                <label for="food-exp-date" class="form-label">保存期限 (日期) *</label>
+                <input type="date" id="food-exp-date" class="form-control" required>
+              </div>
+              <div class="form-group">
+                <label for="food-freshness" class="form-label">新鮮度狀態 *</label>
+                <select id="food-freshness" class="form-control" required>
+                  <option value="fresh">良好 / 新鮮</option>
+                  <option value="warning">即期 / 儘速食用</option>
+                  <option value="expired">過期 / 變質不可食</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">處置狀況 *</label>
+                <input type="text" class="form-control" value="待領取" disabled style="background-color: var(--bg-secondary); color: var(--status-fresh); font-weight: bold;">
+              </div>
+              <div class="form-group form-grid-full">
+                <label for="food-remarks" class="form-label">備註內容</label>
+                <textarea id="food-remarks" class="form-textarea" placeholder="例如：外觀良好、包裝完整。放置於一樓冷藏櫃。"></textarea>
+              </div>
+            </div>
+            
+            <div style="display: flex; gap: 12px; justify-content: flex-end;">
+              <button type="button" class="btn-secondary" onclick="document.getElementById('close-scanner-btn').click();">取消</button>
+              <button type="submit" class="btn-primary"><i data-lucide="check-circle"></i> 確認審核上架</button>
+            </div>
+          </form>
+        </div>
+
+      </div>
     </div>
+  </div>
 
-    <canvas id="capture-canvas" width="320" height="240"></canvas>
+  <!-- ========================================== -->
+  <!-- MODAL: CONFIRM DIALOG -->
+  <!-- ========================================== -->
+  <div class="modal-overlay" id="confirmation-modal" style="z-index: 1000;">
+    <div class="modal-box" style="max-width: 380px;">
+      <div class="modal-header" style="padding: 16px 20px;">
+        <h3>確認操作</h3>
+      </div>
+      <div class="modal-body" style="padding: 20px;">
+        <p id="confirm-message" style="color: var(--text-secondary); line-height: 1.5; font-size: 0.95rem;">確定要執行此操作嗎？</p>
+      </div>
+      <div class="modal-footer" style="padding: 12px 20px;">
+        <button class="btn-secondary" id="confirm-no-btn" style="padding: 8px 16px; font-size: 0.85rem;">取消</button>
+        <button class="btn-primary" id="confirm-yes-btn" style="padding: 8px 16px; font-size: 0.85rem;">確認</button>
+      </div>
+    </div>
+  </div>
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-        import { getFirestore, collection, addDoc, getDocs, query, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-
-        const firebaseConfig = {
-            apiKey: "AIzaSyBZWDL92iOl9i-bfAzxzjwhysTQ049Zhg",
-            authDomain: "food-sharing-bank.firebaseapp.com",
-            projectId: "food-sharing-bank",
-            storageBucket: "food-sharing-bank.firebasestorage.app",
-            messagingSenderId: "83109359198",
-            appId: "1:83109359198:web:5b800603f43a1a1e2b8ecf",
-            measurementId: "G-K56TP7PXDN"
-        };
-
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-
-        const video = document.getElementById('webcam');
-        const snapBtn = document.getElementById('snap-btn');
-        const statusText = document.getElementById('status-text');
-        const freshListContainer = document.getElementById('fresh-list-container');
-        const spoiledListContainer = document.getElementById('spoiled-list-container');
-        
-        const captureCanvas = document.getElementById('capture-canvas');
-        const captureCtx = captureCanvas.getContext('2d');
-
-        const kaggleDatasetPool = [
-            { name: "食材", isFresh: true, loc: "學餐大樓 B1", rate: "98.5%" },
-            { name: "食材", isFresh: false, loc: "生活機能大樓", rate: "92.3%" }
-        ];
-
-        async function startAutomationSystem() {
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" }, audio: false });
-                video.srcObject = stream;
-                statusText.innerText = "系統已就緒。請將物資對準方框，並點擊下方按鈕登錄。";
-            } catch (err) {
-                statusText.innerHTML = "<span style='color:#f87171;'>相機啟動異常。請確認已開啟相機使用權限。</span>";
-            }
-        }
-
-        const backendUrl = "http://10.220.73.181:8000/predict";
-
-        window.triggerIdentifyAndUpload = async function() {
-            if (video.readyState < 2) {
-                alert("視訊串流加載中，請稍候再試。");
-                return;
-            }
-
-            snapBtn.disabled = true;
-            statusText.innerText = "正在擷取視訊影格，傳送至本地邊緣運算中心...";
-
-            captureCanvas.width = video.videoWidth || 320;
-            captureCanvas.height = video.videoHeight || 240;
-            captureCtx.drawImage(video, 0, 0, captureCanvas.width, captureCanvas.height);
-            
-            // 取得完整的 DataURL 並處理為純 Base64，移除前面的 metadata
-            let fullBase64 = captureCanvas.toDataURL('image/jpeg', 0.4); 
-            let pureBase64 = fullBase64.split(',')[1]; 
-
-            try {
-                // 1. 發送 POST 請求至指定 API
-                const response = await fetch(backendUrl, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ image_base64: pureBase64 })
-                });
-
-                if (!response.ok) throw new Error("API 連線失敗");
-
-                const aiResult = await response.json();
-                
-                // 2. 存入後端回傳的真實辨識結果
-                await addDoc(collection(db, "foods"), {
-                    food_name: aiResult.food_name || "偵測品項",
-                    status: aiResult.info || "檢測完成", 
-                    is_fresh: aiResult.is_fresh,
-                    location: aiResult.location || "共享食庫",
-                    photo_data: fullBase64,
-                    created_at: serverTimestamp()
-                });
-                
-                alert(`檢測成功：${aiResult.is_fresh ? '新鮮度合格' : '品質異常'}`);
-
-            } catch (e) {
-                // 3. 只有當 fetch 真實失敗時，才會執行這裡的模擬模式
-                console.warn("後端離線，啟用模擬模式:", e);
-                const randomIndex = Math.floor(Math.random() * kaggleDatasetPool.length);
-                const finalMatched = kaggleDatasetPool[randomIndex];
-                const simulatedStatus = finalMatched.isFresh ? `新鮮度 ${finalMatched.rate}` : `腐爛度 ${finalMatched.rate}`;
-                
-                await addDoc(collection(db, "foods"), {
-                    food_name: finalMatched.name,
-                    status: simulatedStatus,
-                    is_fresh: finalMatched.isFresh,
-                    location: finalMatched.loc,
-                    photo_data: fullBase64,
-                    created_at: serverTimestamp()
-                });
-                
-                alert(`模擬模式檢測完成：${finalMatched.name}\n結果：${simulatedStatus}`);
-            } finally {
-                snapBtn.disabled = false;
-                statusText.innerText = "系統已就緒。請將物資對準方框，並點擊下方按鈕登錄。";
-                loadFoodDataContainers();
-            }
-        }
-
-        async function loadFoodDataContainers() {
-            try {
-                const q = query(collection(db, "foods"), orderBy("created_at", "desc"));
-                const querySnapshot = await getDocs(q);
-                
-                freshListContainer.innerHTML = "";
-                spoiledListContainer.innerHTML = "";
-
-                let freshCount = 0;
-                let spoiledCount = 0;
-
-                querySnapshot.forEach((doc) => {
-                    const data = doc.data();
-                    const timeString = data.created_at ? new Date(data.created_at.seconds * 1000).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : "剛剛";
-                    const isItemFresh = data.is_fresh !== false;
-                    const badgeClass = isItemFresh ? "badge-fresh" : "badge-spoiled";
-
-                    const itemCardHtml = `
-                        <div class="item-card">
-                            <img src="${data.photo_data}" class="item-thumb">
-                            <div class="item-details">
-                                <div class="item-name">${data.food_name}</div>
-                                <div class="item-meta">📍 ${data.location}</div>
-                                <div style="margin-top: 4px;">
-                                    <span class="status-badge ${badgeClass}">${data.status}</span>
-                                </div>
-                                <span class="time-label">${timeString} 登錄</span>
-                            </div>
-                        </div>
-                    `;
-
-                    if (isItemFresh) {
-                        freshListContainer.innerHTML += itemCardHtml;
-                        freshCount++;
-                    } else {
-                        spoiledListContainer.innerHTML += itemCardHtml;
-                        spoiledCount++;
-                    }
-                });
-
-                if (freshCount === 0) freshListContainer.innerHTML = '<p class="empty-state">🍎 目前共享鮮食牆暫無可領取物資</p>';
-                if (spoiledCount === 0) spoiledListContainer.innerHTML = '<p class="empty-state">🍂 目前綠能堆肥區暫無待清運資材</p>';
-
-            } catch (error) {
-                console.error(error);
-            }
-        }
-
-        window.addEventListener("load", startAutomationSystem);
-        document.getElementById('btn-load-fresh').addEventListener('click', loadFoodDataContainers);
-        document.getElementById('btn-load-spoiled').addEventListener('click', loadFoodDataContainers);
-
-        window.switchTab = function(tabId) {
-            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
-            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-            document.getElementById(tabId).classList.add('active');
-            event.currentTarget.classList.add('active');
-        }
-    </script>
+  <!-- App logic entry -->
+  <script src="app.js"></script>
 </body>
 </html>
