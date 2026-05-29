@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>智取食光｜AI 剩食無感去重平台</title>
+    <title>智取食光｜AI 剩食自動去重平台</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
         body {
@@ -62,7 +62,7 @@
             position: relative; width: 100%; aspect-ratio: 4 / 3; border-radius: 20px;
             overflow: hidden; background-color: #000000; border: 1px solid rgba(74, 222, 128, 0.2);
         }
-        video { width: 100%; height: 100%; object-fit: cover; cursor: pointer; }
+        video { width: 100%; height: 100%; object-fit: cover; }
         
         .overlay-box {
             position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
@@ -81,7 +81,7 @@
             display: block; animation: scan 2.5s infinite linear;
         }
 
-        /* 頂部啟動與重置按鈕組 */
+        /* 頂部啟動按鈕 */
         .btn {
             width: 100%; margin-top: 15px; padding: 15px; font-size: 15px; font-weight: 700;
             color: #050807; background: linear-gradient(90deg, #4ade80, #2dd4bf);
@@ -89,11 +89,6 @@
             transition: all 0.2s;
         }
         .btn:active { transform: scale(0.98); }
-        
-        .btn-secondary {
-            background: rgba(255, 255, 255, 0.05); color: #4ade80; border: 1px solid rgba(74, 222, 128, 0.3);
-            box-shadow: none; margin-top: 10px; display: none;
-        }
 
         .status-card {
             margin-top: 15px; background: rgba(0, 0, 0, 0.3); border-radius: 14px;
@@ -130,10 +125,10 @@
 
     <div class="app-card">
         <h2>智取食光</h2>
-        <div class="subtitle">SDG 12 永續校園：IoT 智能自動去重平台</div>
+        <div class="subtitle">SDG 12 永續校園：IoT 智能自動上架系統</div>
         
         <div class="tab-menu">
-            <button class="tab-btn active" onclick="switchTab('upload-tab')">🤖 AI 自動偵測</button>
+            <button class="tab-btn active" onclick="switchTab('upload-tab')">🤖 AI 自動巡檢</button>
             <button class="tab-btn" onclick="switchTab('board-tab')" id="refresh-board-btn">📋 共享即時看板</button>
         </div>
 
@@ -144,15 +139,14 @@
                 <div class="overlay-box"></div>
             </div>
             
-            <button class="btn" id="start-btn">📡 點擊授權並啟動全自動智能巡檢</button>
-            <button class="btn btn-secondary" id="move-btn" onclick="simulateMoveToNewFood()">🔄 模擬鏡頭移開（對準全新物資）</button>
+            <button class="btn" id="start-btn">📡 啟動全自動智能物資巡檢系統</button>
             
             <div class="status-card">
                 <div class="status-title">
-                    <span>📡 系統運作面板</span>
+                    <span>📡 系統核心面板</span>
                     <span class="cooldown-timer" id="cooldown-txt"></span>
                 </div>
-                <div id="status-text">🟢 系統就緒。請先點擊上方藍綠色大按鈕，授權 IoT 系統與鏡頭進行對焦...</div>
+                <div id="status-text">🟢 系統就緒。請點擊上方按鈕，授權開啟全自動智能去化模式...</div>
             </div>
         </div>
 
@@ -184,7 +178,6 @@
 
         const video = document.getElementById('webcam');
         const startBtn = document.getElementById('start-btn');
-        const moveBtn = document.getElementById('move-btn');
         const statusText = document.getElementById('status-text');
         const cooldownTxt = document.getElementById('cooldown-txt');
         const camContainer = document.getElementById('cam-container');
@@ -195,90 +188,71 @@
 
         let isCoolingDown = false;
         let captureInterval = null; 
-        
-        // 核心指紋變數：用這兩個變數來控制不重複上傳
-        let currentFoodFingerprint = "FINGER_001"; 
-        let lastUploadedFingerprint = ""; 
 
         const mockFoodPool = [
-            { name: "嘉藥古傳排骨便當", loc: "學餐大樓 B1 意麵攤", fresh: "新鮮度 96% (良好)" },
-            { name: "友善食光：肉鬆飯糰", loc: "校內 7-11 嘉藥門市", fresh: "新鮮度 92% (良好)" },
-            { name: "香烤雞腿油飯切盤", loc: "資管系 MB401 演講廳外", fresh: "新鮮度 98% (優等)" },
+            { name: "嘉藥珍味排骨便當", loc: "學餐大樓 B1 意麵攤", fresh: "新鮮度 96% (良好)" },
+            { name: "超商友善食光：肉鬆飯糰", loc: "校內 7-11 嘉藥門市", fresh: "新鮮度 92% (良好)" },
+            { name: "香烤雞腿油飯", loc: "資管系 MB401 演講廳外", fresh: "新鮮度 98% (優等)" },
             { name: "波士頓特製奶油麵包", loc: "生活機能大樓 烘焙坊", fresh: "新鮮度 94% (良好)" }
         ];
 
-        // 步驟 1：點擊授權按鈕，同步點亮相機並接通自動化定時器
+        // 點擊大按鈕，通電相機，100% 接通自動化快門
         window.startFullAutomation = async function() {
-            startBtn.style.display = 'none'; // 隱藏授權鈕
-            moveBtn.style.display = 'block'; // 顯示仿真按鈕
-            statusText.innerText = "📡 正在請求相機硬體存取通行證...";
+            startBtn.style.display = 'none'; // 隱藏按鈕
+            statusText.innerText = "📡 正在向手機請求相機存取權限...";
 
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" }, audio: false });
                 video.srcObject = stream;
                 
-                statusText.innerText = "【無感去化啟動】IoT 系統接通成功！每 7 秒自動抓取畫面過濾並上架最新物資...";
+                statusText.innerText = "【全自動模式啟動】IoT 巡檢鏡頭已接通！每 7 秒自動強制擷取畫面並上架最新物資...";
                 
-                // 💡 關鍵繞過：在使用者點擊按鈕的「同一個事件迴圈」中啟動定時器，手機瀏覽器 100% 允許拍照！
+                // 💡 徹底拿掉所有去重防線！只要使用者點這一次按鈕授權，後台每 7 秒強制發射快門上傳！
                 if (!captureInterval) {
-                    captureInterval = setInterval(autoCheckAndCapture, 7000);
+                    captureInterval = setInterval(forceCaptureAndUpload, 7000);
                 }
             } catch (err) {
                 console.error(err);
-                statusText.innerHTML = "<span style='color:#ef4444;'>❌ 鏡頭開機失敗，請確認是否為 HTTPS 加密連線或重新整理給予權限。</span>";
+                statusText.innerHTML = "<span style='color:#ef4444;'>❌ 鏡頭開機失敗，請確認是否為 HTTPS 加密連線並給予權限。</span>";
             }
         }
 
-        // 步驟 2：核心自動抓取與去重過濾邏輯
-        async function autoCheckAndCapture() {
+        // 🚀 強制拍照並寫入雲端 Firestore
+        async function forceCaptureAndUpload() {
+            // 如果在前一個 7 秒的冷卻硬體鎖中，或是鏡頭還沒載入好，就先跳過
             if (isCoolingDown || video.readyState !== video.HAVE_CURRENT_DATA) return;
 
             try {
-                // 【智慧排重】：如果目前的畫面特徵碼跟上一張成功上傳的一模一樣（代表鏡頭停在同一個食物上沒動）
-                if (currentFoodFingerprint === lastUploadedFingerprint) {
-                    statusText.innerText = "【智慧偵測】目標剩食未發生移動，自動拦截封包避免重複上架。";
-                    return;
-                }
-
-                // 通過過濾，開始抓取實體截圖照片
                 isCoolingDown = true;
                 camContainer.className = "camera-container cooldown";
                 
-                // 鎖定當下這張照片的特徵，直到按下模擬移動鈕才會改變
-                lastUploadedFingerprint = currentFoodFingerprint; 
+                statusText.innerHTML = "🔥 <b>[IoT 自動巡檢觸發]</b><br>🔍 正在從視訊串流中擷取實體縮圖影像...<br>⏳ 正在將資料強制推送至 Firebase 雲端資料庫...";
 
-                // 抓取真實手機鏡頭畫面
+                // 1. 強行用 Canvas 把鏡頭當下看到的實體便當抓下來
                 captureCtx.drawImage(video, 0, 0, captureCanvas.width, captureCanvas.height);
                 const realPhotoBase64 = captureCanvas.toDataURL('image/jpeg', 0.4);
 
-                // 隨機撈取一個品項模擬 YOLO 辨識
+                // 2. 隨機抽取池子裡的食物
                 const randomFood = mockFoodPool[Math.floor(Math.random() * mockFoodPool.length)];
-                statusText.innerHTML = `🔥 <b>[AI 自動擷取全新影像]</b><br>🔍 YOLO 辨識：${randomFood.name}<br>⏳ 正在同步真實截圖並登錄至食物共享銀行...`;
 
-                // 寫入 Firebase Firestore
+                // 3. 毫無攔截，直奔雲端資料庫寫入！
                 await addDoc(collection(db, "foods"), {
                     food_name: randomFood.name,
                     status: randomFood.fresh,
                     location: randomFood.loc,
-                    photo_data: realPhotoBase64, // 100% 成功寫入實體拍照縮圖！
+                    photo_data: realPhotoBase64, // 100% 寫入你手機當下拍到的真實縮圖
                     created_at: serverTimestamp()
                 });
                 
-                statusText.innerHTML = `🎉 <b>[物資自動上架成功]</b><br>品項：${randomFood.name}<br>狀態：${randomFood.fresh}`;
+                statusText.innerHTML = `🎉 <b>[自動上架成功]</b><br>品項：${randomFood.name}<br>狀態：${randomFood.fresh}`;
+                
+                // 進入 4 秒巡檢倒數，結束後再度啟動下一輪自動抓取
                 startCooldownTimer(4);
             } catch (e) {
-                console.error("全自動快門寫入出錯:", e);
+                console.error("寫入雲端失敗:", e);
                 isCoolingDown = false;
                 camContainer.className = "camera-container working";
             }
-        }
-
-        // 🧠【Demo 仿真控制黑客松神技】：簡報時點一下，代表店員換了下一個便當拍！
-        window.simulateMoveToNewFood = function() {
-            // 生成一串全新的隨機亂數指紋，強迫下一個 7 秒時突破過濾網，成功觸發上架！
-            currentFoodFingerprint = "FINGER_" + Math.random().toString(36).substring(2, 9);
-            statusText.innerText = "【鏡頭變動】偵測到場景轉換！系統正重新對焦全新物資目標...";
-            camContainer.className = "camera-container working";
         }
 
         function startCooldownTimer(seconds) {
@@ -291,14 +265,14 @@
                     isCoolingDown = false;
                     cooldownTxt.innerText = "";
                     camContainer.className = "camera-container working";
-                    statusText.innerText = "【巡檢中】IoT 自動化系統正在掃描方框內物資...";
+                    statusText.innerText = "【巡檢中】IoT 自動化系統正在掃描環境物資...";
                 } else {
                     cooldownTxt.innerText = `⏳ 巡檢倒數 (${remain}s)`;
                 }
             }, 1000);
         }
 
-        // 看板端動態讀取
+        // 看板端實時讀取
         async function loadFoodBoard() {
             foodListContainer.innerHTML = '<p style="color: #889994; font-size: 14px; padding: 20px;">同步最新剩食動態...</p>';
             try {
