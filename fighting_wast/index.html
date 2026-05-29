@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="校園剩食與廚餘智慧管理平台 - 運用 YOLO AI 影像技術識別超商即期食品新鮮度，整合餐廳便當、廚餘及校園活動餐盒，攜手減少校園食物浪費。">
+  <title>校園剩食與廚餘智慧管理系統</title>
+  
+  <!-- CSS Stylesheet -->
+  <link rel="stylesheet" href="style.css">
+  
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+
+  <!-- Main Navigation Header -->
+  <header>
+    <div class="logo">
+      <i class="fas fa-leaf"></i>
+      <span>校園剩食智慧管理平台</span>
+    </div>
+    <div class="nav-links">
+      <button class="nav-btn active" data-target-section="public-hub">
+        <i class="fas fa-hand-holding-heart"></i> 前台剩食共享
+      </button>
+      <button class="nav-btn nav-btn-admin" data-target-section="admin-panel">
+        <i class="fas fa-chart-line"></i> 後台管理中心
+      </button>
+      <button class="nav-btn" onclick="openModal('settings-modal')" title="Firebase 設定">
+        <i class="fas fa-cog"></i>
+      </button>
+    </div>
+  </header>
+
+  <div class="container">
+    
+    <!-- ======================================= -->
+    <!-- 1. PUBLIC HUB VIEW                      -->
+    <!-- ======================================= -->
+    <section id="public-hub" class="view-section active">
+      
+      <!-- Hero Banner -->
+      <div class="hero-banner">
+        <h1>珍愛校園物資，從每口食物開始</h1>
+        <p>在這裡，您可以免費索取超商即將過期的鮮食、學校餐廳未售完的精美便當、以及各類活動剩餘的優質餐盒。讓剩食不再是浪費！</p>
+        <div style="font-size: 0.9rem; color: var(--primary); font-weight: 700;">
+          <i class="fas fa-check-circle"></i> 搭載 YOLO AI 影像辨識系統，即時把關超商食品新鮮度
+        </div>
+      </div>
+
+      <!-- Search Filters Drawer -->
+      <div class="search-filter-box">
+        <div class="search-input-wrapper">
+          <i class="fas fa-search"></i>
+          <input type="text" id="search-keyword" class="search-input" placeholder="搜尋項目名稱、備註說明 (例如: 鮪魚、工學一館)...">
+        </div>
+        
+        <div class="filter-grid">
+          <div class="filter-group">
+            <label for="filter-category">食品類別</label>
+            <select id="filter-category" class="filter-select">
+              <option value="all">全部種類</option>
+              <option value="expiring">即期超商食品</option>
+              <option value="bento">餐廳未賣完便當</option>
+              <option value="event">學校活動餐盒剩餘</option>
+              <option value="waste">餐廳廚餘 (堆肥原料)</option>
+            </select>
+          </div>
+          
+          <div class="filter-group">
+            <label for="filter-freshness">新鮮度級別</label>
+            <select id="filter-freshness" class="filter-select">
+              <option value="all">不限新鮮度</option>
+              <option value="high">極佳 (80% - 100%)</option>
+              <option value="medium">一般 (50% - 79%)</option>
+              <option value="low">待處置 (&lt; 50%)</option>
+            </select>
+          </div>
+
+          <div class="filter-group">
+            <label for="filter-expiry">保存期限</label>
+            <select id="filter-expiry" class="filter-select">
+              <option value="all">不限時間</option>
+              <option value="today">今天到期</option>
+              <option value="tomorrow">明天到期</option>
+              <option value="3days">3 天內到期</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card Listings Grid -->
+      <h2 style="font-family: var(--font-heading); margin-bottom: 1.5rem; font-size: 1.5rem; display: flex; align-items: center; gap: 0.5rem;">
+        <i class="fas fa-hamburger" style="color: var(--primary);"></i> 最新開放索取剩食
+      </h2>
+      <div id="listings-container" class="listings-grid">
+        <!-- Rendered dynamically via app.js -->
+      </div>
+
+    </section>
+
+    <!-- ======================================= -->
+    <!-- 2. ADMIN CONSOLE VIEW                   -->
+    <!-- ======================================= -->
+    <section id="admin-panel" class="view-section">
+      
+      <!-- Top Stats Row -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon green">
+            <i class="fas fa-trash-restore"></i>
+          </div>
+          <div class="stat-info">
+            <h3>已救回剩食總數</h3>
+            <p id="stat-items-saved">0 件</p>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon orange">
+            <i class="fas fa-utensils"></i>
+          </div>
+          <div class="stat-info">
+            <h3>累計未售便當</h3>
+            <p id="stat-bento-count">0 個</p>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon purple">
+            <i class="fas fa-box"></i>
+          </div>
+          <div class="stat-info">
+            <h3>活動剩餘餐盒</h3>
+            <p id="stat-bento-count">0 個</p>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon blue">
+            <i class="fas fa-seedling"></i>
+          </div>
+          <div class="stat-info">
+            <h3>廚餘收集重量</h3>
+            <p id="stat-total-weight">0.0 kg</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Split Layout -->
+      <div class="admin-layout">
+        
+        <!-- Left Column: Registration Form -->
+        <div class="admin-sidebar">
+          <div class="admin-card">
+            <h2 id="form-title-text"><i class="fas fa-plus-circle" style="color: var(--primary);"></i> 登錄 / 編輯食物項目</h2>
+            
+            <form id="admin-food-form">
+              <!-- Item name -->
+              <div class="form-group">
+                <label for="food-name">項目名稱 *</label>
+                <input type="text" id="food-name" class="form-input" placeholder="請輸入食品或項目名稱" required>
+              </div>
+
+              <!-- Category -->
+              <div class="form-group">
+                <label for="food-category">物資類別 *</label>
+                <select id="food-category" class="form-select" required>
+                  <option value="expiring">1. 即將過期的超商食品</option>
+                  <option value="bento">2. 餐廳未賣完之可食便當</option>
+                  <option value="waste">3. 餐廳的廚餘物資 (堆肥/飼料)</option>
+                  <option value="event">4. 學校活動餐盒剩餘</option>
+                </select>
+              </div>
+
+              <!-- Expiring Specific Sub-fields -->
+              <div id="expiring-food-fields">
+                <div class="form-group">
+                  <label>相片與 YOLO 辨識 *</label>
+                  <div class="camera-trigger-zone" id="camera-trigger">
+                    <i class="fas fa-camera-retro"></i>
+                    <p>搭配手機鏡頭拍照辨識 (YOLO AI)</p>
+                    <span style="font-size: 0.75rem; color: var(--text-muted);">或點選上傳本地食品照片</span>
+                  </div>
+                  <!-- Hidden inputs -->
+                  <input type="file" id="image-file-input" accept="image/*" style="display: none;">
+                </div>
+
+                <div class="form-group row-group">
+                  <div>
+                    <label for="food-mfg-date">製造日期</label>
+                    <input type="date" id="food-mfg-date" class="form-input">
+                  </div>
+                  <div>
+                    <label for="food-freshness">新鮮度級別 (%)</label>
+                    <input type="number" id="food-freshness" class="form-input" min="0" max="100" value="80" placeholder="0-100">
+                  </div>
+                </div>
+              </div>
+
+              <!-- Expiry date -->
+              <div class="form-group">
+                <label for="food-exp-date">保存期限 / 消耗時限 *</label>
+                <input type="date" id="food-exp-date" class="form-input" required>
+              </div>
+
+              <!-- Status -->
+              <div class="form-group">
+                <label for="food-status">處置狀況</label>
+                <select id="food-status" class="form-select">
+                  <option value="available">可索取 (Available)</option>
+                  <option value="claimed">已被索取 (Claimed)</option>
+                  <option value="disposed">已進行廢棄處置 (Disposed)</option>
+                </select>
+              </div>
+
+              <!-- Notes -->
+              <div class="form-group">
+                <label for="food-notes">詳細備註 (包含放置位置、廚餘重量等)</label>
+                <textarea id="food-notes" class="form-textarea" placeholder="例如: 放置於工學大樓A棟3樓休息區、廚餘約 8.5kg 裝桶。"></textarea>
+              </div>
+
+              <!-- Submit Buttons -->
+              <div style="display: flex; gap: 0.8rem; margin-top: 1rem;">
+                <button type="button" class="btn btn-secondary" onclick="resetAdminForm()" style="flex:1;">
+                  重設
+                </button>
+                <button type="submit" id="submit-food-btn" class="btn" style="flex:2;">
+                  <i class="fas fa-plus"></i> 新增食物項目
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- Right Column: Dashboard Tables & Live Charts -->
+        <div style="display: flex; flex-direction: column; gap: 2rem;">
+          
+          <!-- Chart visualization -->
+          <div class="charts-container">
+            <div class="chart-box" style="grid-column: 1 / -1;">
+              <h3>校園剩食種類登錄比例 (Live Stats)</h3>
+              <div class="bar-chart">
+                <div class="bar-row">
+                  <div class="bar-label">即期超商</div>
+                  <div class="bar-wrapper">
+                    <div id="chart-fill-expiring" class="bar-fill expiring" style="width: 0%"></div>
+                  </div>
+                  <div id="chart-val-expiring" class="bar-value">0 筆</div>
+                </div>
+                <div class="bar-row">
+                  <div class="bar-label">餐廳便當</div>
+                  <div class="bar-wrapper">
+                    <div id="chart-fill-bento" class="bar-fill bento" style="width: 0%"></div>
+                  </div>
+                  <div id="chart-val-bento" class="bar-value">0 筆</div>
+                </div>
+                <div class="bar-row">
+                  <div class="bar-label">活動剩食</div>
+                  <div class="bar-wrapper">
+                    <div id="chart-fill-event" class="bar-fill event" style="width: 0%"></div>
+                  </div>
+                  <div id="chart-val-event" class="bar-value">0 筆</div>
+                </div>
+                <div class="bar-row">
+                  <div class="bar-label">餐廳廚餘</div>
+                  <div class="bar-wrapper">
+                    <div id="chart-fill-waste" class="bar-fill waste" style="width: 0%"></div>
+                  </div>
+                  <div id="chart-val-waste" class="bar-value">0 筆</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Inventory List -->
+          <div class="admin-table-container">
+            <h2 style="font-family: var(--font-heading); margin-bottom: 1.2rem; font-size: 1.2rem; display: flex; align-items: center; gap: 0.5rem;">
+              <i class="fas fa-list-ul" style="color: var(--primary);"></i> 現存登錄項目清冊
+            </h2>
+            <table class="admin-table">
+              <thead>
+                <tr>
+                  <th>名稱</th>
+                  <th>類別</th>
+                  <th>期限/新鮮度</th>
+                  <th>狀態</th>
+                  <th>操作</th>
+                </tr>
+              </thead>
+              <tbody id="admin-table-body">
+                <!-- Rendered dynamically via app.js -->
+              </tbody>
+            </table>
+          </div>
+
+        </div>
+
+      </div>
+
+    </section>
+
+  </div>
+
+  <!-- ======================================= -->
+  <!-- 3. MODALS SYSTEM                        -->
+  <!-- ======================================= -->
+
+  <!-- Detail Food Information Modal -->
+  <div id="detail-modal" class="modal-overlay">
+    <div class="modal-container">
+      <div class="modal-header">
+        <h2>食物詳細履歷資訊</h2>
+        <button class="modal-close" onclick="closeModal('detail-modal')">&times;</button>
+      </div>
+      <div class="modal-body" id="detail-modal-body">
+        <!-- Rendered dynamically -->
+      </div>
+      <div class="modal-footer" id="detail-modal-footer">
+        <button class="btn btn-secondary" onclick="closeModal('detail-modal')">關閉</button>
+        <button class="btn">立即索取</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- YOLO AI Camera Scan Modal -->
+  <div id="camera-modal" class="modal-overlay">
+    <div class="modal-container" style="max-width: 500px;">
+      <div class="modal-header">
+        <h2>YOLO AI 智慧鮮度偵測</h2>
+        <button class="modal-close" onclick="closeModal('camera-modal')">&times;</button>
+      </div>
+      <div class="modal-body" style="padding: 1rem;">
+        
+        <div class="yolo-scan-container">
+          <div class="yolo-camera-box">
+            <!-- Glowing Scan Line -->
+            <div class="scan-line"></div>
+            <!-- Bounding box simulation -->
+            <div class="yolo-box" id="yolo-box-overlay">
+              <span class="yolo-label" id="yolo-label-span">御飯糰 94%</span>
+            </div>
+            
+            <video id="yolo-video" class="yolo-video" autoplay playsinline></video>
+            <canvas id="yolo-photo-canvas" class="yolo-photo-canvas"></canvas>
+          </div>
+
+          <!-- Interactive Results Display -->
+          <div class="yolo-results-panel" id="yolo-result-panel">
+            <p id="yolo-result-text">偵測中...</p>
+          </div>
+        </div>
+
+      </div>
+      <div class="modal-footer" style="justify-content: space-between;">
+        <div>
+          <button class="btn btn-secondary" onclick="document.getElementById('image-file-input').click()" title="使用相簿">
+            <i class="far fa-images"></i> 本地上傳
+          </button>
+        </div>
+        <div style="display: flex; gap: 0.5rem;">
+          <button class="btn btn-secondary" onclick="closeModal('camera-modal')">取消</button>
+          <button class="btn btn-danger" id="camera-capture-btn" onclick="capturePhoto()">
+            <i class="fas fa-camera"></i> 拍攝相片並分析
+          </button>
+          <button class="btn" onclick="applyYOLOResults()">
+            <i class="fas fa-check"></i> 套用結果
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Firebase Connection Configuration Modal -->
+  <div id="settings-modal" class="modal-overlay">
+    <div class="modal-container">
+      <div class="modal-header">
+        <h2>Firebase 資料庫連線配置</h2>
+        <button class="modal-close" onclick="closeModal('settings-modal')">&times;</button>
+      </div>
+      <form id="firebase-config-form">
+        <div class="modal-body">
+          <div class="settings-tip">
+            <strong>提示：</strong> 系統預設使用 LocalStorage 作為資料庫（演示模式）。若需要多裝置資料同步，請在下方輸入您 Firebase 專案的 Web App Config 參數。儲存後網頁將自動載入 Firebase 資料庫。
+          </div>
+          
+          <div class="form-group">
+            <label>API Key (apiKey)</label>
+            <input type="text" id="fb-api-key" class="form-input" placeholder="AIzaSy...">
+          </div>
+          <div class="form-group">
+            <label>Auth Domain (authDomain)</label>
+            <input type="text" id="fb-auth-domain" class="form-input" placeholder="project-name.firebaseapp.com">
+          </div>
+          <div class="form-group row-group">
+            <div>
+              <label>Project ID (projectId)</label>
+              <input type="text" id="fb-project-id" class="form-input" placeholder="project-name">
+            </div>
+            <div>
+              <label>Storage Bucket (storageBucket)</label>
+              <input type="text" id="fb-storage-bucket" class="form-input" placeholder="project-name.appspot.com">
+            </div>
+          </div>
+          <div class="form-group row-group">
+            <div>
+              <label>Messaging Sender ID</label>
+              <input type="text" id="fb-messaging-sender-id" class="form-input" placeholder="1234567890">
+            </div>
+            <div>
+              <label>App ID (appId)</label>
+              <input type="text" id="fb-app-id" class="form-input" placeholder="1:12345:web:abcd...">
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="closeModal('settings-modal')">取消</button>
+          <button type="button" class="btn btn-danger" onclick="document.getElementById('firebase-config-form').reset();" style="margin-right:auto;">清空</button>
+          <button type="submit" class="btn">
+            <i class="fas fa-save"></i> 儲存配置並重新載入
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Toast Message container -->
+  <div id="toast-container"></div>
+
+  <!-- Main JavaScript App Module Entry -->
+  <script type="module" src="app.js"></script>
+</body>
+</html>
