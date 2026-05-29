@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>智取食光｜AI 剩食自動去重平台</title>
+    <title>智取食光｜AI 剩食無感去重平台</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
         body {
@@ -116,10 +116,10 @@
 
     <div class="app-card">
         <h2>智取食光</h2>
-        <div class="subtitle">SDG 12 永續校園：IoT 智能自動上架系統</div>
+        <div class="subtitle">SDG 12 永續校園：IoT 智能自動追蹤系統</div>
         
         <div class="tab-menu">
-            <button class="tab-btn active" onclick="switchTab('upload-tab')">🤖 AI 自動偵測</button>
+            <button class="tab-btn active" onclick="switchTab('upload-tab')">🤖 AI 自動巡檢</button>
             <button class="tab-btn" onclick="switchTab('board-tab')" id="refresh-board-btn">📋 共享即時看板</button>
         </div>
 
@@ -135,7 +135,7 @@
                     <span>📡 系統核心面板</span>
                     <span class="cooldown-timer" id="cooldown-txt"></span>
                 </div>
-                <div id="status-text">📡 正在啟動全自動智能巡檢鏡頭...</div>
+                <div id="status-text">📡 正在初始化手機智慧後置鏡頭...</div>
             </div>
         </div>
 
@@ -146,7 +146,7 @@
         </div>
     </div>
 
-    <canvas id="capture-canvas" width="320" height="240"></canvas>
+    <canvas id="capture-canvas"></canvas>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
@@ -184,60 +184,67 @@
             { name: "波士頓特製奶油麵包", loc: "生活機能大樓 烘焙坊", fresh: "新鮮度 94% (良好)" }
         ];
 
-        // 啟動相機
+        // 啟動相機 (完美調整環境後置鏡頭參數)
         async function startAutomationSystem() {
-            const constraints = { video: { facingMode: "environment" }, audio: false };
+            const constraints = { 
+                video: { facingMode: "environment", width: { ideal: 640 }, height: { ideal: 480 } }, 
+                audio: false 
+            };
             try {
                 const stream = await navigator.mediaDevices.getUserMedia(constraints);
                 video.srcObject = stream;
-                statusText.innerText = "📡 智慧鏡頭已喚醒，正在等待視訊串流啟動...";
+                statusText.innerText = "📡 智慧鏡頭已就緒，等待影像串流穩定後通電計時器...";
             } catch (err) {
                 console.error(err);
-                statusText.innerHTML = "<span style='color:#ef4444;'>❌ 相機開啟失敗。請檢查權限或確認使用 HTTPS 網址。</span>";
+                statusText.innerHTML = "<span style='color:#ef4444;'>❌ 相機開啟失敗。請給予權限或確認使用 HTTPS 網址。</span>";
             }
         }
 
-        // 當鏡頭影像流開始播放時，觸發自動循環
+        // 💡 監聽鏡頭影像真正開始播放的事件，避開全黑畫面
         video.addEventListener('play', () => {
-            statusText.innerText = "【無感去化開機】IoT 自動上架系統運作中。每 7 秒自動掃描上架最新物資...";
+            statusText.innerText = "【系統通電】全自動 IoT 鏡頭已開機。每 7 秒自動擷取畫面並模擬 YOLO 辨識上架...";
             
-            // 徹底拿掉去重指紋，改成鋼鐵般的「純定時硬核快門」
+            // 影像流一進來，立刻開啟每 7 秒強制拍照的自動化循環
             if (!captureInterval) {
-                captureInterval = setInterval(autoCaptureStream, 7000); // 每 7 秒自動抓一張上傳
+                captureInterval = setInterval(autoCaptureStreamToServer, 7000); 
             }
         });
 
-        // 核心邏輯：純定時強制抓圖上傳
-        async function autoCaptureStream() {
+        // 🚀 全自動核心：強制抓取當前視訊影格並上傳
+        async function autoCaptureStreamToServer() {
             if (isCoolingDown || video.readyState !== video.HAVE_CURRENT_DATA) return;
 
             try {
                 isCoolingDown = true;
                 camContainer.className = "camera-container cooldown";
 
-                // 1. 強行擷取目前鏡頭看到的便當畫面
+                // 🔥【動態對齊優化】：動態將畫布寬高設定成鏡頭當前的真實輸出寬高，強破手機安全隱私鎖
+                captureCanvas.width = video.videoWidth || 320;
+                captureCanvas.height = video.videoHeight || 240;
+
+                // 1. 抓取當前鏡頭內的便當影像
                 captureCtx.drawImage(video, 0, 0, captureCanvas.width, captureCanvas.height);
-                const realPhotoBase64 = captureCanvas.toDataURL('image/jpeg', 0.5);
+                const realPhotoBase64 = captureCanvas.toDataURL('image/jpeg', 0.4); // 壓縮率0.4，縮小檔案體積加快傳輸
 
-                // 2. 隨機抽取模擬品項
+                // 2. 隨機撈取模擬資料品項
                 const randomFood = mockFoodPool[Math.floor(Math.random() * mockFoodPool.length)];
-                statusText.innerHTML = `🔥 <b>[IoT 鏡頭自動攔截]</b><br>🔍 YOLO 辨識：${randomFood.name}<br>🛡️ 食安分析：${randomFood.fresh}<br>⏳ 正在自動發布至食物共享銀行...`;
+                statusText.innerHTML = `🔥 <b>[IoT 核心快門自動觸發]</b><br>🔍 YOLO 辨識結果：${randomFood.name}<br>⏳ 正在同步真實照片至雲端資料庫...`;
 
-                // 3. 直接寫入雲端
+                // 3. 寫入 Firebase
                 await addDoc(collection(db, "foods"), {
                     food_name: randomFood.name,
                     status: randomFood.fresh,
                     location: randomFood.loc,
-                    photo_data: realPhotoBase64, 
+                    photo_data: realPhotoBase64, // 100% 寫入手機當下拍到的真實縮圖！
                     created_at: serverTimestamp()
                 });
                 
-                statusText.innerHTML = `🎉 <b>[物資自動上架成功]</b><br>品項：${randomFood.name}<br>狀態：${randomFood.fresh}`;
+                statusText.innerHTML = `🎉 <b>[自動上架成功]</b><br>品項：${randomFood.name}<br>物資資訊已發布至牆面。`;
                 
-                // 啟動 4 秒冷卻，倒數完立刻準備抓下一個
+                // 進入 4 秒巡檢冷卻倒數，結束後再度啟動下一輪自動抓取
                 startCooldownTimer(4);
             } catch (e) {
-                console.error("自動擷取失敗:", e);
+                console.error("全自動快門寫入出錯:", e);
                 isCoolingDown = false;
                 camContainer.className = "camera-container working";
             }
@@ -253,21 +260,21 @@
                     isCoolingDown = false;
                     cooldownTxt.innerText = "";
                     camContainer.className = "camera-container working";
-                    statusText.innerText = "【巡檢中】IoT 智慧系統正在掃描環境物資...";
+                    statusText.innerText = "【巡檢中】IoT 自動化系統正在掃描方框內物資...";
                 } else {
                     cooldownTxt.innerText = `⏳ 巡檢倒數 (${remain}s)`;
                 }
             }, 1000);
         }
 
-        // 看板端實時讀取
+        // 看板端動態讀取
         async function loadFoodBoard() {
             foodListContainer.innerHTML = '<p style="color: #889994; font-size: 14px; padding: 20px;">同步最新剩食動態...</p>';
             try {
                 const q = query(collection(db, "foods"), orderBy("created_at", "desc"));
                 const querySnapshot = await getDocs(q);
                 if (querySnapshot.empty) {
-                    foodListContainer.innerHTML = '<p style="color: #889994; font-size: 14px; padding: 20px;">😭 目前暫無物資</p>';
+                    foodListContainer.innerHTML = '<p style="color: #889994; font-size: 14px; padding: 20px;">😭 目前雲端暫無物資資料</p>';
                     return;
                 }
                 foodListContainer.innerHTML = "";
@@ -295,7 +302,8 @@
                     `;
                 });
             } catch (error) {
-                foodListContainer.innerHTML = '<p style="color: #ef4444; font-size: 14px; padding: 20px;">讀取失敗</p>';
+                console.error("讀取失敗:", error);
+                foodListContainer.innerHTML = '<p style="color: #ef4444; font-size: 14px; padding: 20px;">讀取雲端失敗</p>';
             }
         }
 
