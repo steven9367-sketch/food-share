@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>智取食光｜AI 剩食共享平台</title>
+    <style>
+        /* 全域樣式：綠色永續科技感 */
+        * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+        body {
+            background: linear-gradient(135deg, #121c18 0%, #080d0b 100%);
+            color: #e0e7e5;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 15px;
+        }
+
+        /* 主卡片：磨砂玻璃質感 */
+        .app-card {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 24px;
+            width: 100%;
+            max-width: 450px;
+            padding: 24px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+            text-align: center;
+        }
+
+        /* 標題設計 */
+        h2 {
+            font-size: 24px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            background: linear-gradient(90deg, #4ade80, #2dd4bf);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 6px;
+        }
+        .subtitle {
+            font-size: 13px;
+            color: #889994;
+            margin-bottom: 20px;
+        }
+
+        /* 鏡頭容器：滿版優化 */
+        .camera-container {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 4 / 3;
+            border-radius: 16px;
+            overflow: hidden;
+            background-color: #050807;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.8);
+            border: 1px solid rgba(74, 222, 128, 0.2);
+        }
+        video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover; /* 讓手機畫面不會拉伸變形 */
+        }
+
+        /* 霓虹對焦輔助框 */
+        .overlay-box {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 75%;
+            height: 65%;
+            border: 2px dashed rgba(74, 222, 128, 0.6);
+            box-shadow: 0 0 0 9999px rgba(5, 8, 7, 0.5);
+            pointer-events: none;
+            border-radius: 12px;
+            transition: all 0.3s ease;
+        }
+        /* 當點擊辨識時，對焦框變成閃爍綠色，增加互動感 */
+        .camera-container.scanning .overlay-box {
+            border-color: #2dd4bf;
+            box-shadow: 0 0 15px #2dd4bf, 0 0 0 9999px rgba(5, 8, 7, 0.6);
+            animation: pulse 1s infinite alternate;
+        }
+
+        /* 科技感按鈕 */
+        .btn {
+            width: 100%;
+            margin-top: 20px;
+            padding: 16px;
+            font-size: 16px;
+            font-weight: 600;
+            color: #050807;
+            background: linear-gradient(90deg, #4ade80, #2dd4bf);
+            border: none;
+            border-radius: 14px;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(74, 222, 128, 0.3);
+            transition: all 0.2s ease;
+        }
+        .btn:active {
+            transform: scale(0.98);
+            opacity: 0.9;
+        }
+        .btn:disabled {
+            background: #273732;
+            color: #637d75;
+            box-shadow: none;
+            cursor: not-allowed;
+        }
+
+        /* 狀態文字卡片 */
+        .status-card {
+            margin-top: 15px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+            padding: 12px;
+            font-size: 13px;
+            color: #a3b8b2;
+            border-left: 3px solid #2dd4bf;
+            text-align: left;
+            line-height: 1.4;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 0.6; }
+            100% { opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="app-card">
+        <h2>智取食光</h2>
+        <div class="subtitle">SDG 12 永續校園：AI 剩食智能共享端</div>
+        
+        <div class="camera-container" id="cam-container">
+            <video id="webcam" autoplay playsinline></video>
+            <div class="overlay-box"></div>
+        </div>
+
+        <button class="btn" id="action-btn">開啟智慧鏡頭</button>
+        <div class="status-card" id="status-text">系統狀態：等待開啟鏡頭以進行食安辨識...</div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+        import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+        // Firebase 配置
+        const firebaseConfig = {
+            apiKey: "AIzaSyBZWDL92iOl9i-bfAzxzjwhysTQ049Zhg",
+            authDomain: "food-sharing-bank.firebaseapp.com",
+            projectId: "food-sharing-bank",
+            storageBucket: "food-sharing-bank.firebasestorage.app",
+            messagingSenderId: "83109359198",
+            appId: "1:83109359198:web:5b800603f43a1a1e2b8ecf",
+            measurementId: "G-K56TP7PXDN"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        const video = document.getElementById('webcam');
+        const actionBtn = document.getElementById('action-btn');
+        const statusText = document.getElementById('status-text');
+        const camContainer = document.getElementById('cam-container');
+        
+        let isCameraOpen = false;
+
+        async function handleCamera() {
+            if (!isCameraOpen) {
+                // 手機端運行優化：強制要求高解析度、調用後置鏡頭、禁止環境音干擾
+                const constraints = { 
+                    video: { 
+                        facingMode: "environment",
+                        width: { ideal: 1280 },
+                        height: { ideal: 720 }
+                    }, 
+                    audio: false 
+                };
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia(constraints);
+                    video.srcObject = stream;
+                    isCameraOpen = true;
+                    actionBtn.innerText = "⚡ 智能捕捉與食安辨識";
+                    actionBtn.style.background = "linear-gradient(90deg, #2dd4bf, #06b6d4)";
+                    statusText.innerText = "系統狀態：鏡頭已就緒。請將食物置於方框中央。";
+                } catch (err) {
+                    console.error(err);
+                    alert("無法獲取鏡頭權限！手機測試請確保使用 HTTPS 加密網址開啟。");
+                }
+            } else {
+                uploadAndIdentify();
+            }
+        }
+
+        async function uploadAndIdentify() {
+            actionBtn.disabled = true;
+            camContainer.classList.add('scanning');
+            statusText.innerText = "系統狀態：[前端優化] 正在偵測對焦與動態防震，擷取最佳清晰影像...";
+
+            // 模擬隊員 B 之後接上的 YOLO 影像辨識結果
+            setTimeout(async () => {
+                const yoloResult = {
+                    food_name: "培根蛋炒飯", 
+                    status: "新鮮度 96% (良好)",    
+                    location: "嘉南藥理大學 餐廳 B1", 
+                    is_claimed: false
+                };
+
+                statusText.innerText = `AI 辨識反饋：偵測到【${yoloResult.food_name}】狀態【${yoloResult.status}】。正在寫入食物共享銀行...`;
+
+                try {
+                    const docRef = await addDoc(collection(db, "foods"), {
+                        food_name: yoloResult.food_name,
+                        status: yoloResult.status,
+                        location: yoloResult.location,
+                        is_claimed: yoloResult.is_claimed,
+                        created_at: serverTimestamp()
+                    });
+                    
+                    statusText.innerText = `🎉 成功上架！\n物資已自動發布至食物銀行地圖！\n上架編號: ${docRef.id}`;
+                    alert(`【AI 食安檢查通過】\n品項：${yoloResult.food_name}\n狀態：${yoloResult.status}\n\n已成功將此剩食資訊登錄至永續共享銀行！`);
+                } catch (e) {
+                    console.error(e);
+                    statusText.innerText = "系統狀態：雲端資料庫寫入失敗";
+                } finally {
+                    actionBtn.disabled = false;
+                    camContainer.classList.remove('scanning');
+                }
+            }, 2000); 
+        }
+
+        actionBtn.addEventListener('click', handleCamera);
+    </script>
+</body>
+</html>
